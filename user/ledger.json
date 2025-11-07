@@ -1,0 +1,15 @@
+[
+    {
+        "id": 1,
+        "type": "auction",
+        "name": "sheep",
+        "min_bid": 500.0,
+        "owner": "me"
+    },
+    {
+        "id": 2,
+        "type": "auction",
+        "name": "cow",
+        "min_bid": 500.0
+    }
+]
