@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from network.peer import run_peer
+from network.config import parse_config
+
 
 # ================================================================
 # Configuration
@@ -90,7 +93,7 @@ def save_ledger(ledger):
 #             print("Not a number, try again")
 
 
-def create_info():
+def create_info(args):
     user = {}
     print("Name:")
     user["name"] = input("> ").strip()
@@ -120,6 +123,16 @@ def create_info():
 
     # HOST DISCOVER
 
+    if len(args) == 2:
+        # Local Testing Use Config Files
+        print("Peer info fetched from config file")
+        host, port = parse_config(sys.argv[1])
+    else: 
+        #LAN Case -> For the Future
+        print("LAN Case: Not implemented!")
+        sys.exit(1)
+
+    run_peer(host, port)
 
     save_info(user)
 
@@ -310,12 +323,9 @@ def menu_user():
         print("Unknown command.")
     menu_user()
 
-def main():
+def start_client(args):
     ensure_config_dir()
     user = load_info()
     if user == {}:
-        create_info()
+        create_info(args)
     menu_user()
-
-if __name__ == "__main__":
-    main()
