@@ -3,21 +3,29 @@ from network.peer_state import PeerState
 from network.udp import peer_udp_handling
 from network.tcp import peer_tcp_handling, await_new_peers_conn
 
+from client.input.peer_input import peer_input, menu_user
+
 from network.local_test import TEST
 
-def user_auction_input(connections, stop_event):
+def user_auction_input(connections, stop_event): 
+
+    menu_user()
 
     while not stop_event.is_set():
-        msg = input()
-        if msg.lower() in ("quit", "exit"):
+        
+        msg = peer_input()
+        
+        if msg.lower() in ("exit"):
             print("[*] Exiting on user request.")
             stop_event.set()
             break
+        
         for conn in connections[:]:
             try:
                 conn.sendall(msg.encode())
             except:
                 connections.remove(conn)
+
 
 def peer_messaging(state: PeerState):
     threading.Thread(

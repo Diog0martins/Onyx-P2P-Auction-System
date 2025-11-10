@@ -2,14 +2,15 @@
     {
         "id": 1,
         "type": "auction",
-        "name": "sheep",
-        "min_bid": 500.0,
+        "name": "pila",
+        "min_bid": 10000000.0,
         "owner": "me"
     },
     {
         "id": 2,
         "type": "auction",
-        "name": "cow",
-        "min_bid": 500.0
+        "name": "pilao",
+        "min_bid": 10.0,
+        "owner": "me"
     }
 ]
