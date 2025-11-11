@@ -1,4 +1,6 @@
 import json, os
+from pathlib import Path
+CONFIG_DIR = Path.cwd() / "config"
 
 def make_json_path(path):
     # Get the last part of the path (e.g., 'config1')
@@ -11,7 +13,9 @@ def make_json_path(path):
 
 def parse_config_file(config_file):
 
-    with open(config_file) as fp:
+    # file = config_file + ".json"
+    # print(file)
+    with open(CONFIG_DIR / config_file) as fp:
         content = json.load(fp)
     
     return content["host"], int(content["port"])
@@ -19,6 +23,9 @@ def parse_config_file(config_file):
 def parse_config(config_path):
 
     config_file = make_json_path(config_path)
+    print()
+    print(config_file)
+    print()
 
     info = parse_config_file(config_file)
 

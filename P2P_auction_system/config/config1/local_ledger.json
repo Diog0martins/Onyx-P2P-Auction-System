@@ -1,0 +1,8 @@
+[
+    {
+        "id": 1,
+        "type": "auction",
+        "name": "cow",
+        "min_bid": 5.0
+    }
+]

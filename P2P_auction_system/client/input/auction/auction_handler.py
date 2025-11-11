@@ -1,58 +1,38 @@
 import json
-from client.ledger.ledger_handler import load_ledger, save_ledger
+from client.ledger.ledger_handler import load_public_ledger, save_public_ledger, load_local_ledger, save_local_ledger
 
 
-def cmd_auction():
-    # Ask for auction object
-    auction_object = input("Auction object: ").strip()
-    if not auction_object:
-        print("Invalid name.")
-        return
-
-    # Ask for minimum bid
-    try:
-        min_bid = float(input("Minimum bid: ").strip())
-    except ValueError:
-        print("Invalid number.")
-        return
-
+def cmd_auction(config, name, bid):
     # Load existing ledger
-    ledger = load_ledger()
+    public_ledger = load_public_ledger(config)
+    local_ledger = load_local_ledger(config)
 
     # Generate progressive auction_id
-    if len(ledger) == 0:
+    if len(public_ledger) == 0:
         auction_id = 1
     else:
         # Get the LAST id among auctions
-        auction_id = max(item.get("id", 0) for item in ledger) + 1
-
-    # Full auction object stored privately
-    auction_obj_local = {
-        "id": auction_id,
-        "type": "auction",
-        "name": auction_object,
-        "min_bid": min_bid,
-        "owner": "me"       # <-- PRIVATE INFO
-    }
-
+        auction_id = max(item.get("id", 0) for item in public_ledger) + 1
 
     # Broadcast version (no owner)
-    auction_obj_public = {
+    auction_obj = {
         "id": auction_id,
         "type": "auction",
-        "name": auction_object,
-        "min_bid": min_bid,
+        "name": name,
+        "min_bid": bid,
     }
 
     # Save locally
-    ledger.append(auction_obj_local)
-    save_ledger(ledger)
+    public_ledger.append(auction_obj)
+    local_ledger.append(auction_obj)
+    save_public_ledger(public_ledger, config)
+    save_local_ledger(local_ledger, config)
 
     print()
     print(f"Auction created with ID {auction_id}")
 
     # JSON ready to send
-    auction_json = json.dumps(auction_obj_public)
+    auction_json = json.dumps(auction_obj)
 
     print("JSON ready to broadcast:")
     print(auction_json)
