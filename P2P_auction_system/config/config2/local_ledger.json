@@ -4,5 +4,29 @@
         "type": "auction",
         "name": "sheep",
         "min_bid": 5.0
+    },
+    {
+        "id": 3,
+        "type": "auction",
+        "name": "ferro",
+        "min_bid": 100.0
+    },
+    {
+        "id": 4,
+        "type": "auction",
+        "name": "ola",
+        "min_bid": 100.0
+    },
+    {
+        "id": 5,
+        "type": "auction",
+        "name": "ola",
+        "min_bid": 10.0
+    },
+    {
+        "id": 6,
+        "type": "auction",
+        "name": "ola",
+        "min_bid": 12.0
     }
 ]

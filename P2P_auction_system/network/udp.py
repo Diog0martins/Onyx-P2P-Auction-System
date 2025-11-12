@@ -51,7 +51,10 @@ def listen_for_messages(s: socket.socket, state: PeerState):
     print(f"[LISTENING] UDP messages on port {s.getsockname()[1]}")
 
     while True:
-        data, addr = s.recvfrom(1024)
+        try:
+            data, addr = s.recvfrom(1024)
+        except ConnectionResetError:
+            continue
         message = data.decode()
         print(f"[UDP] From {addr}: {message}")
 
