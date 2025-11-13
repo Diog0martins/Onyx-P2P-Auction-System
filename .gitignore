@@ -46,3 +46,9 @@ coverage.xml
 # Others
 .DS_Store
 Thumbs.db
+
+config/*
+!config/**/
+!config/**/config*.json
+
+repomix-output.xml
