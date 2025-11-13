@@ -6,9 +6,9 @@ from pathlib import Path
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from network.peer import run_peer_test
-from network.config import parse_config
+from config.config import parse_config
 from client.info.info_handler import load_info, save_info_test, create_info
-from client.keys.keys_handler import generate_key_pair
+from crypto.keys.keys_handler import generate_key_pair
 
 
 # ================================================================
