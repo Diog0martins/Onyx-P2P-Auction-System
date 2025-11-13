@@ -10,6 +10,7 @@ from config.config import parse_config
 from client.info.info_handler import load_info, save_info_test, create_info
 from crypto.keys.keys_handler import generate_key_pair
 
+from client.ca_handler.ca_connection import connect_and_register_to_ca
 
 # ================================================================
 # Configuration
@@ -34,6 +35,11 @@ def start_client(args):
         user = create_info()
 
     # Mando a public key ao CA
+    info = connect_and_register_to_ca("client-teste")
+    print(json.dumps({
+        "uid": info["uid"],
+        "cert": info["cert"],
+    }, indent=4))
 
 
     # Receber o certificado

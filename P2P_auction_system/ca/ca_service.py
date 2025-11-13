@@ -12,11 +12,20 @@ from pydantic import BaseModel, Field
 from nacl.signing import SigningKey, VerifyKey
 from nacl.exceptions import BadSignatureError
 
+import sys
+import uvicorn
+
+from config.config import parse_config_file
+from local_test import TEST
+
 # Definem caminhos para a base de dados SQLite e apra os ficheiros com a chave
 # privada e pública da CA.
 DB_PATH = os.environ.get("CA_DB_PATH", "ca.db")
 CA_SK_PATH = os.environ.get("CA_SK_PATH", "ca_ed25519_sk.pem")
 CA_PK_PATH = os.environ.get("CA_PK_PATH", "ca_ed25519_pk.pem")
+
+CA_SK = ""
+CA_VK = ""
 
 # Converte dicionário Python em JSON
 def canonical_bytes(obj: dict) -> bytes:
@@ -58,7 +67,6 @@ def ensure_ca_keys():
         f.write(bytes(vk))
     return sk, vk
 
-CA_SK, CA_VK = ensure_ca_keys()
 
 # Cria uma conexão a ca.db
 def get_db():
@@ -92,7 +100,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
 
 # Entra no /register
 class RegisterReq(BaseModel):
@@ -205,3 +212,27 @@ def issue_tokens(req: TokensReq):
     conn.close()
 
     return TokensResp(uid=req.uid, issued=issued)
+
+def prepare_ca():
+    global CA_SK
+    global CA_VK
+    CA_SK, CA_VK = ensure_ca_keys()
+    init_db()
+
+def run_ca():
+    if TEST != 1:
+        print(f"[CA] TEST != 1 (TEST={TEST}). CA não será iniciada neste modo.")
+        sys.exit(0)
+
+    host, port = parse_config_file("configCA/configCA.json")
+
+    print(f"[CA] A iniciar CA em {host}:{port} (TEST={TEST})")
+
+    prepare_ca()
+
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        reload=False,
+    )

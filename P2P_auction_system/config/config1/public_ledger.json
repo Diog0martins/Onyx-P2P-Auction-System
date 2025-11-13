@@ -1,0 +1,8 @@
+[
+    {
+        "id": 1,
+        "type": "auction",
+        "name": "aguadecoco",
+        "min_bid": 10.0
+    }
+]
