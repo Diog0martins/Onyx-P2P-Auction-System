@@ -36,7 +36,7 @@ def start_client(args):
     # Mando a public key ao CA
 
 
-    # Recevo o certificado
+    # Receber o certificado
 
 
 

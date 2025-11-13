@@ -1,6 +1,6 @@
 import threading, socket, json
 from network.peer_state import PeerState
-from network.local_test import TEST
+from local_test import TEST
 
 # ======== UDP Message Layouts ========
 

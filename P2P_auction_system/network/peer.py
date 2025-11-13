@@ -5,7 +5,7 @@ from network.tcp import peer_tcp_handling, await_new_peers_conn
 
 from client.input.peer_input import peer_input, menu_user
 
-from network.local_test import TEST
+from local_test import TEST
 
 def user_auction_input(connections, stop_event, config): 
 

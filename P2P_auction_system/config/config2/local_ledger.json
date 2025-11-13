@@ -4,5 +4,11 @@
         "type": "auction",
         "name": "sheep",
         "min_bid": 5.0
+    },
+    {
+        "id": 3,
+        "type": "auction",
+        "name": "guilherme",
+        "min_bid": 10000000.0
     }
 ]
