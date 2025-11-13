@@ -16,5 +16,11 @@
         "type": "auction",
         "name": "guilherme",
         "min_bid": 10000000.0
+    },
+    {
+        "id": 4,
+        "type": "auction",
+        "name": "ferro",
+        "min_bid": 2.0
     }
 ]
