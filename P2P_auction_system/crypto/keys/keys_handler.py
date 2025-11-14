@@ -1,39 +1,23 @@
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
+from crypto.keys.keys_crypto import generate_key_pair, load_private_and_public_key
 
 
-def load_private_and_public_key(private_key_path, public_key_path):
+def prepare_key_pair_generation(user_path):
+    
+    print(user_path)
 
-    # Load private key
-    with open(private_key_path, "rb") as f:
-        private_data = f.read()
-        private_key = serialization.load_pem_private_key(private_data, password=None)
+    prv_path = user_path / "private_key.pem"
+    pub_path = user_path / "public_key.pem"
 
-    # Load public key
-    with open(public_key_path, "rb") as f:
-        public_data = f.read()
-        public_key = serialization.load_pem_public_key(public_data)
+    if prv_path.exists() and pub_path.exists():
+        print("User already has keys!")
+        return load_private_and_public_key(prv_path, pub_path)
 
-    return private_key, public_key
+    # Generate new pair
+    private_pem, public_pem = generate_key_pair()
+    # Ensure directory exists
+    user_path.mkdir(parents=True, exist_ok=True)
+    prv_path.write_bytes(private_pem)
+    pub_path.write_bytes(public_pem)
 
 
-def generate_key_pair():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
-
-    # Convert private key to PEM
-    private_pem = private_key.private_bytes(
-        encoding = serialization.Encoding.PEM,
-        format = serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm = serialization.NoEncryption()
-    )
-
-    # Convert public key to PEM
-    public_pem = private_key.public_key().public_bytes(
-        encoding = serialization.Encoding.PEM,
-        format = serialization.PublicFormat.SubjectPublicKeyInfo
-    )
-
-    return private_pem, public_pem
+    return load_private_and_public_key(prv_path, pub_path)

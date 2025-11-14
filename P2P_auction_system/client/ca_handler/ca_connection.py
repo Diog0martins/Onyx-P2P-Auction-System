@@ -1,17 +1,17 @@
 import base64
-import json
 import sys
 
 import requests
 from nacl.signing import SigningKey
 
-# ----- CA endpoint hard-coded -----
+# ----- CA information hard-coded -----
 CA_IP = "127.0.0.1"
 CA_PORT = 8443
 CA_URL = f"http://{CA_IP}:{CA_PORT}"
 
 
-def connect_and_register_to_ca(display_name: str):
+def connect_and_register_to_ca(display_name: str, client):
+    
     try:
         health_resp = requests.get(f"{CA_URL}/health", timeout=3)
         health_resp.raise_for_status()
