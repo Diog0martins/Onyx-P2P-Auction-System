@@ -48,6 +48,7 @@ coverage.xml
 Thumbs.db
 
 config/*
+!config/config.py
 !config/**/
 !config/**/config*.json
 
