@@ -18,11 +18,11 @@ import uvicorn
 from config.config import parse_config_file
 from local_test import TEST
 
-# Definem caminhos para a base de dados SQLite e apra os ficheiros com a chave
+# Definem caminhos para a base de dados SQLite e para os ficheiros com a chave
 # privada e pública da CA.
-DB_PATH = os.environ.get("CA_DB_PATH", "ca.db")
-CA_SK_PATH = os.environ.get("CA_SK_PATH", "ca_ed25519_sk.pem")
-CA_PK_PATH = os.environ.get("CA_PK_PATH", "ca_ed25519_pk.pem")
+DB_PATH = os.environ.get("CA_DB_PATH", "ca/ca.db")
+CA_SK_PATH = os.environ.get("CA_SK_PATH", "config/configCA/ca_ed25519_sk.pem")
+CA_PK_PATH = os.environ.get("CA_PK_PATH", "config/configCA/ca_ed25519_pk.pem")
 
 CA_SK = ""
 CA_VK = ""

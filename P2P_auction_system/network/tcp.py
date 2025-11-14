@@ -1,30 +1,9 @@
 import threading, socket, queue
-import json
 from network.peer_state import PeerState
-from client.ledger.ledger_handler import load_public_ledger, save_public_ledger, load_local_ledger, save_local_ledger
+from client.message.process_message import process_message
 
 
 # ======== TCP Utilities ========
-
-def store_in_ledger(obj, config):
-    ledger = load_public_ledger(config)
-    ledger.append(obj)
-    save_public_ledger(ledger, config)
-
-def process_message(msg, config):
-    try:
-        obj = json.loads(msg)
-    except:
-        print("[!] Received non-JSON message; ignored")
-        return
-
-    mtype = obj.get("type")
-
-    if mtype in ("auction", "bid"):
-        store_in_ledger(obj, config)
-        print(f"[✓] Stored {mtype} (id={obj.get('id')}) in ledger")
-    else:
-        print(f"[?] Unknown message type received: {mtype}")
 
 # Function to handle messages from peers
 def handle_connection(conn, addr, config):

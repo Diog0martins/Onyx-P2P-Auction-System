@@ -3,7 +3,7 @@ from network.peer_state import PeerState
 from network.udp import peer_udp_handling
 from network.tcp import peer_tcp_handling, await_new_peers_conn
 
-from client.input.peer_input import peer_input, menu_user
+from client.message.peer_input import peer_input, menu_user
 
 from local_test import TEST
 
@@ -38,12 +38,13 @@ def peer_messaging(state: PeerState, config):
     ).start()
 
 def run_peer_test(host, port, config):
+    
     if TEST == 1:
         state = PeerState(host, port)
     else: 
         state = PeerState(host, port, 5000)
 
-    # Create sockets for peer discovery(UDP) and communication(TCP)
+    # Create sockets for peer discovery(UDP) and communication (TCP)
     udp_socket = peer_udp_handling(state)
     tcp_socket = peer_tcp_handling(state, config)
     

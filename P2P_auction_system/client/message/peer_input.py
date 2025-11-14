@@ -1,5 +1,5 @@
-from client.input.auction.auction_handler import cmd_auction
-from client.input.bid.bid_handler import cmd_bid 
+from client.message.auction.auction_handler import cmd_auction
+from client.message.bid.bid_handler import cmd_bid 
 
 def menu_user():
 

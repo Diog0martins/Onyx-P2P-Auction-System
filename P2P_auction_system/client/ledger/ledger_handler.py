@@ -4,6 +4,11 @@ from pathlib import Path
 
 CONFIG_DIR = Path.cwd() / "config"
 
+def store_in_ledger(obj, config):
+    ledger = load_public_ledger(config)
+    ledger.append(obj)
+    save_public_ledger(ledger, config)
+
 def load_public_ledger(config):
     ledger_file = CONFIG_DIR / config / "public_ledger.json"
     if ledger_file.exists():

@@ -18,7 +18,15 @@ def parse_config_file(config_file):
     with open(CONFIG_DIR / config_file) as fp:
         content = json.load(fp)
     
-    return content["host"], int(content["port"])
+    user_id = content.get("userID")
+    host = content.get("host")
+    port = int(content["port"]) if "port" in content else None
+
+    # Decide what to return based on keys (CA config or User config)
+    if user_id is not None:
+        return user_id, host, port 
+    else:
+        return host, port
 
 def parse_config(config_path):
 
