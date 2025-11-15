@@ -3,3 +3,5 @@ class Client:
         self.userID = userID
         self.public_key = public_key
         self.private_key = private_key
+        self.cert_pem = None
+        self.ca_pub_pem = None

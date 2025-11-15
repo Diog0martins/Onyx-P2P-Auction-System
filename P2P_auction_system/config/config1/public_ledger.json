@@ -10,5 +10,11 @@
         "type": "auction",
         "name": "ferro",
         "min_bid": 200.0
+    },
+    {
+        "id": 1,
+        "type": "auction",
+        "name": "iron",
+        "min_bid": 300000.0
     }
 ]
