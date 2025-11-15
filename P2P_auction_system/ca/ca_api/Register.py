@@ -3,13 +3,12 @@ from typing import Optional
 
 # Entra no /register
 class RegisterReq(BaseModel):
-    user_pub: str = Field(..., description="RSA public key (PEM/base64)")
-    display_name: Optional[str] = Field(None, description="Optional metadata")
+    csr_pem_b64: str = Field(..., description="Base64-encoded PEM CSR")
+
 
 # Sai do /register
 class RegisterResp(BaseModel):
     uid: str
-    cert: dict
-    cert_sig: str
-    ca_pub: str
+    cert_pem_b64: str
+    ca_pub_pem_b64: str
     token_quota: int

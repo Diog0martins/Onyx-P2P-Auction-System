@@ -17,8 +17,6 @@ def ensure_config_dir_test(argv):
     (CONFIG_DIR / argv).mkdir(parents=True, exist_ok=True)
 
 
-
-
 def check_user_path(user_path):
     if not user_path.exists():
         user_path.mkdir(parents=True, exist_ok=True)
@@ -48,12 +46,10 @@ def start_client(args):
     client = Client(user_id, public_key, private_key)
 
     # Send public key ao CA
-    info = connect_and_register_to_ca(user_id, client)
-    
-    print(json.dumps({
-        "uid": info["uid"],
-        "cert": info["cert"],
-    }, indent=4))
+    info = connect_and_register_to_ca(client)
+
+    client.cert_pem = info["cert_pem"]
+    client.ca_pub_pem = info["ca_pub_pem"]
 
     # Host Discovery and Connection Establishment
     run_peer_test(host, port, args[1])
