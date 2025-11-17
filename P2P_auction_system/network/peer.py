@@ -9,7 +9,7 @@ from local_test import TEST
 
 def user_auction_input(connections, stop_event, config): 
 
-    menu_user()
+    menu_user(config)
 
     while not stop_event.is_set():
         

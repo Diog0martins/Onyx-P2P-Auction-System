@@ -1,11 +1,35 @@
 from client.message.auction.auction_handler import cmd_auction
-from client.message.bid.bid_handler import cmd_bid 
+from client.message.bid.bid_handler import cmd_bid
+from client.ledger.ledger_handler import load_public_ledger, load_local_ledger
 
-def menu_user():
+def print_auctions(config):
+    public_ledger = load_public_ledger(config)
+    local_ledger = load_local_ledger(config)
+
+    # Crear lista de IDs de auctions propias
+    my_auction_ids = [entry["id"] for entry in local_ledger if entry.get("type") == "auction"]
+
+    # Filtrar auctions públicas que NO son nuestras
+    auctions = [
+        entry for entry in public_ledger
+        if entry.get("type") == "auction" and entry.get("id") not in my_auction_ids
+    ]
+
+    if not auctions:
+        print("No available auctions (not yours).")
+        return
+
+    print("\nAvailable auctions:")
+    for a in auctions:
+        print(f"ID {a['id']} | {a['name']} | min bid: {a['min_bid']}")
+
+def menu_user(config):
+
+    print_auctions(config)
 
     print("\nAvailable commands:")
-    print(" /bid")
-    print(" /auction {name} {min bid}")
+    print(" /bid {auction_id} {min_bid}")
+    print(" /auction {name} {min_bid}")
     # print(" /status")
     print(" /exit\n")
 
@@ -20,8 +44,16 @@ def peer_input(config):
 
     command = parts[0]
 
-    if user_input == "bid":
-        msg = cmd_bid(config)
+    if command == "bid":
+        if len(parts) < 3:
+            print("Usage: /bid <auction_id> <min_bid>")
+            return None
+
+        auction_id = parts[1]
+        min_bid = parts[2]
+
+        msg = cmd_bid(config, auction_id, min_bid)
+
     elif command == "auction":
         if len(parts) < 3:
             print("Usage: /auction <name> <min_bid>")
