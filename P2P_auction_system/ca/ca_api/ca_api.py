@@ -87,9 +87,9 @@ def register(req: RegisterReq, request: Request):
 # - send signed blinded token
 # - send timestamp and signature
 @app.post("/tokens", response_model=TokensResp)
-def issue_tokens(req: TokensReq):
+def issue_tokens(req: TokensReq, request: Request):
 
-    conn = get_db()
+    conn = get_db(request.app.state.DB_PATH)
     
     if not user_exists(conn, req.uid):
         conn.close()
@@ -118,7 +118,7 @@ def blind_sign(req: BlindSignReq, request: Request):
     conn.close()
 
     # 2. Obter a chave privada do CA
-    ca_sk = request.app.state.CCA_SK
+    ca_sk = request.app.state.CA_SK
 
     # 3. Decodificar o blinded token
     blinded_int = int.from_bytes(b64d(req.blinded_token_b64), "big")

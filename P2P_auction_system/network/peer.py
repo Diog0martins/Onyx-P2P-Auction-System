@@ -7,13 +7,13 @@ from client.message.peer_input import peer_input, menu_user
 
 from local_test import TEST
 
-def user_auction_input(connections, stop_event, config): 
+def user_auction_input(connections, stop_event, config, client):
 
     menu_user(config)
 
     while not stop_event.is_set():
         
-        msg = peer_input(config)
+        msg = peer_input(config, client)
 
         if msg is None:
             continue
@@ -30,14 +30,14 @@ def user_auction_input(connections, stop_event, config):
             except:
                 connections.remove(conn)
 
-def peer_messaging(state: PeerState, config):
+def peer_messaging(state: PeerState, config, client):
     threading.Thread(
         target=user_auction_input,
-        args=(state.connections, state.stop_event, config),
+        args=(state.connections, state.stop_event, config, client),
         daemon=True
     ).start()
 
-def run_peer_test(host, port, config):
+def run_peer_test(host, port, config, client):
     
     if TEST == 1:
         state = PeerState(host, port)
@@ -46,11 +46,11 @@ def run_peer_test(host, port, config):
 
     # Create sockets for peer discovery(UDP) and communication (TCP)
     udp_socket = peer_udp_handling(state)
-    tcp_socket = peer_tcp_handling(state, config)
+    tcp_socket = peer_tcp_handling(state, config, client)
     
     # Main Loops to send messages and receive connections
-    peer_messaging(state, config)
-    await_new_peers_conn(state, config)
+    peer_messaging(state, config, client)
+    await_new_peers_conn(state, config, client)
 
     # --- Cleanup ---
     print("[*] Shutting down peer.")

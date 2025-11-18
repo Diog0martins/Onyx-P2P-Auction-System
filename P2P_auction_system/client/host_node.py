@@ -8,10 +8,9 @@ from config.config import parse_config
 from crypto.keys.keys_handler import prepare_key_pair_generation
 from client.client_state import Client 
 from client.ca_handler.ca_connection import connect_and_register_to_ca
-
+from client.token_manager import TokenManager
 
 CONFIG_DIR = Path.cwd() / "config"
-
 
 def ensure_config_dir_test(argv):
     (CONFIG_DIR / argv).mkdir(parents=True, exist_ok=True)
@@ -51,7 +50,15 @@ def start_client(args):
     client.cert_pem = info["cert_pem"]
     client.ca_pub_pem = info["ca_pub_pem"]
 
+    config_name = args[1] if len(args) == 2 else "config_lan"
+    client.token_manager = TokenManager(
+        config_name=config_name,
+        ca_pub_pem=client.ca_pub_pem,
+        uid=info["uid"]
+    )
+    print(f"[Client] Token Manager inicializado para {config_name}")
+
     # Host Discovery and Connection Establishment
-    run_peer_test(host, port, args[1])
+    run_peer_test(host, port, args[1], client)
 
 

@@ -2,7 +2,14 @@ import json
 from client.ledger.ledger_handler import load_public_ledger, save_public_ledger, load_local_ledger, save_local_ledger
 
 
-def cmd_auction(config, name, bid):
+def cmd_auction(config, name, bid, token_manager):
+
+    try:
+        token_data = token_manager.get_token()
+    except Exception as e:
+        print(f"[!] Não foi possível criar Auction: {e}")
+        return None
+
     # Load existing ledger
     public_ledger = load_public_ledger(config)
     local_ledger = load_local_ledger(config)
@@ -20,6 +27,7 @@ def cmd_auction(config, name, bid):
         "type": "auction",
         "name": name,
         "min_bid": bid,
+        "token": token_data
     }
 
     # Save locally

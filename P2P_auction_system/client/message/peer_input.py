@@ -33,14 +33,14 @@ def menu_user(config):
     # print(" /status")
     print(" /exit\n")
 
-def peer_input(config):
+def peer_input(config, client_state):
 
     user_input = input().strip()
-
     parts = user_input.split()
 
-    if len(parts) == 0:
-        return None
+    if len(parts) == 0: return None
+    command = parts[0]
+    msg = None
 
     command = parts[0]
 
@@ -52,7 +52,7 @@ def peer_input(config):
         auction_id = parts[1]
         min_bid = parts[2]
 
-        msg = cmd_bid(config, auction_id, min_bid)
+        msg = cmd_bid(config, auction_id, min_bid, client_state.token_manager)
 
     elif command == "auction":
         if len(parts) < 3:
@@ -66,7 +66,7 @@ def peer_input(config):
             print("Invalid number for min_bid")
             return None
 
-        msg = cmd_auction(config, auction_name, min_bid)
+        msg = cmd_auction(config, auction_name, min_bid, client_state.token_manager)
     # elif user_input == "status":
     #     msg = cmd_status()
     #     msg = "nothing"

@@ -1,4 +1,5 @@
 import threading, socket, queue
+import traceback
 from network.peer_state import PeerState
 from client.message.process_message import process_message
 
@@ -6,33 +7,45 @@ from client.message.process_message import process_message
 # ======== TCP Utilities ========
 
 # Function to handle messages from peers
-def handle_connection(conn, addr, config):
+def handle_connection(conn, addr, config, client_state):
     print(f"[+] Connected: {addr}")
     while True:
         try:
-            data = conn.recv(1024)
+            data = conn.recv(4096)
             if not data:
                 break
             msg = data.decode()
-            print(f"[{addr}] {msg}")
+            process_message(msg, config, client_state)
 
-            process_message(msg, config)
-
-        except:
+        except ConnectionResetError:
+            print(f"[-] Ligação fechada abruptamente por {addr}")
             break
+
+        except Exception as e:
+            print(f"[!] ERRO CRÍTICO ao processar mensagem de {addr}: {e}")
+            traceback.print_exc()
+            break
+
     print(f"[-] Disconnected: {addr}")
     conn.close()
 
 
 # Functions to accpet and establish connections with new peers
-def accept_incoming(listener, connections, config):
+def accept_incoming(listener, connections, config, client_state):
     while True:
-        conn, addr = listener.accept()
-        connections.append(conn)
-        threading.Thread(target=handle_connection, args=(conn, addr, config), daemon=True).start()
+        try:
+            conn, addr = listener.accept()
+            connections.append(conn)
+            threading.Thread(
+                target=handle_connection,
+                args=(conn, addr, config, client_state),
+                daemon=True
+            ).start()
+        except Exception as e:
+            print(f"[!] Erro no accept_incoming: {e}")
 
 
-def await_new_peers_conn(state: PeerState, config):
+def await_new_peers_conn(state: PeerState, config, client_state):
     while not state.stop_event.is_set():
             try:
                 peer_host, peer_port = state.discovered_peers.get(timeout=1)
@@ -52,7 +65,7 @@ def await_new_peers_conn(state: PeerState, config):
                         state.connections.append(conn)
                         threading.Thread(
                             target=handle_connection,
-                            args=(conn, (peer_host, peer_port), config),
+                            args=(conn, (peer_host, peer_port), config, client_state),
                             daemon=True
                         ).start()
                     except Exception as e:
@@ -67,7 +80,7 @@ def await_new_peers_conn(state: PeerState, config):
 
 # ======== TCP Handler ========
 
-def peer_tcp_handling(state: PeerState, config): 
+def peer_tcp_handling(state: PeerState, config, client_state):
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listener.bind((state.host, state.port))
@@ -77,7 +90,7 @@ def peer_tcp_handling(state: PeerState, config):
 
     threading.Thread(
         target=accept_incoming,
-        args=(listener, state.connections, config),
+        args=(listener, state.connections, config, client_state),
         daemon=True
     ).start()
 

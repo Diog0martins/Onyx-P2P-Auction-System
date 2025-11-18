@@ -1,7 +1,7 @@
 import json
 from client.ledger.ledger_handler import load_public_ledger, save_public_ledger, load_local_ledger, save_local_ledger
 
-def cmd_bid(config, auction_id, min_bid):
+def cmd_bid(config, auction_id, min_bid, token_manager):
     public_ledger = load_public_ledger(config)
     local_ledger = load_local_ledger(config)
 
@@ -40,6 +40,13 @@ def cmd_bid(config, auction_id, min_bid):
     auction = next((x for x in auctions if x.get("id") == auction_id), None)
     if auction is not None:
         if min_bid >= auction["min_bid"]:
+
+            try:
+                token_data = token_manager.get_token()
+            except Exception as e:
+                print(f"[!] Não foi possível licitar: {e}")
+                return None
+
             # Generate progressive bid ID
             bid_id = max(item.get("id", 0) for item in public_ledger) + 1
 
@@ -48,7 +55,8 @@ def cmd_bid(config, auction_id, min_bid):
                 "id": bid_id,
                 "type": "bid",
                 "auction_id": auction_id,
-                "bid": min_bid
+                "bid": min_bid,
+                "token": token_data
             }
 
             public_ledger.append(bid_obj)

@@ -5,3 +5,4 @@ class Client:
         self.private_key = private_key
         self.cert_pem = None
         self.ca_pub_pem = None
+        self.token_manager = None

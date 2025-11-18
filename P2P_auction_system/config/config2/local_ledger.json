@@ -4,5 +4,25 @@
         "type": "auction",
         "name": "ferro",
         "min_bid": 200.0
+    },
+    {
+        "id": 3,
+        "type": "bid",
+        "auction_id": 1,
+        "bid": 600.0,
+        "token": {
+            "token_id": "1cfc1e34e87a7f6f0853f6e06db051c8",
+            "token_sig": "bBiwJpA1mQDVfucoDJMxMftyu6IgIUMHU8asrEU89gp1hGeWboHuRZ1tEICdSUobLOBF01cLtWFZhKtm3vy77P+VHDga+L6/uoUsKhcayaKOdXH3OCzfkg25zNG1b5A0SvWtdxRiGpCrcQSjfO2Y9yubnKoagEmnD7RYcjt/fCwsi3zpiF2+70UOlyN/SDeJaBk1u43VV5ODGVmvn+yjmXRhbbIMLhwS4KHhqf11v9J++Kti5WGaiXjjhR1HBd16dbKza7mhjbCkj2dxEDm/THklwZt+uSuBajOU3+tXhj80Y9hny4TmbVnU/kXbSLyHnrBCHMZTjhHyNbSgOgaIsw=="
+        }
+    },
+    {
+        "id": 8,
+        "type": "bid",
+        "auction_id": 1,
+        "bid": 600.0,
+        "token": {
+            "token_id": "cbc75240e60b64c2a9248a164a1aa622",
+            "token_sig": "eKyeFsUw1oETfYYMJ+kk7dt3mu2hy+kATHadrE3xF7v6fRkBJb7RInlUZl1wlPiifDFluDZKj0S35zzOw3Klumrvb8ObyqooaKWu1co83VsXL2cVjXQEm6MaSi17quD0rgcFJvm1nd+W8OzAvAWlegyelUPlDsquckEiFw6bdg0FYZ5UI/E4eX7BCJCuLoQu2PSGqSy6f+MQExRDiVWA/aaFLzZmy0N4Q5OYLzmusuPoB7CmFPs/4ZeGve0yUaAOK2gGJs6V44k6YVeQZggJFD7eP04ithIYUUlrQ3MEbVCfRnCl6FUVN/8e3v2ROuRoz1Ngh/3M+mJ5o2/WrqizdQ=="
+        }
     }
 ]
