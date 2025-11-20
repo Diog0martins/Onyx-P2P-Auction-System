@@ -15,13 +15,11 @@ CONFIG_DIR = Path.cwd() / "config"
 def ensure_config_dir_test(argv):
     (CONFIG_DIR / argv).mkdir(parents=True, exist_ok=True)
 
-
 def check_user_path(user_path):
     if not user_path.exists():
         user_path.mkdir(parents=True, exist_ok=True)
 
 def start_client(args):
-
     # Verify if we are working in LAN or localhost
     if len(args) == 2:
         config = args[1]
@@ -31,7 +29,7 @@ def start_client(args):
     
     else: 
         #LAN Case -> For the Future
-        user_path = Path("/user")
+        user_path = Path("user")
         host = get_ip()
         port = 6000
         print("LAN Case: Not implemented!")
