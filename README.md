@@ -1,3 +1,3 @@
 # Peer-to-Peer-Privacy-Preserving-Auction-System
 
-Python version: 3.12+
+Python version: 3.12++
