@@ -36,7 +36,7 @@ def cmd_auction(client, name, bid):
 
 # ----- Utilities to have in run auction data -----
 
-def add_auction(auctions, auction_id, highest_bid):
+def add_auction(auctions, auction_id, highest_bid, mine):
     if auction_id in auctions["auction_list"]:
         return False
 
@@ -45,8 +45,9 @@ def add_auction(auctions, auction_id, highest_bid):
 
     auctions["auction_list"][auction_id] = {
         "highest_bid": highest_bid,
-        "my_bid": True
+        "my_bid": mine
     }
+
     return True
 
 def get_auction_higher_bid(auctions: dict, auction_id: int):
@@ -63,7 +64,7 @@ def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid):
     return True
 
 def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid):
-    added = add_auction(auctions, auction_id, starting_bid)
+    added = add_auction(auctions, auction_id, starting_bid, "True")
     if not added:
         return False
 
@@ -81,4 +82,5 @@ def generate_next_auction_id(auctions):
 
 
 def check_auction_existence(auctions, auction_id):
+    print(auctions)
     return auction_id in auctions.get("auction_list", {})

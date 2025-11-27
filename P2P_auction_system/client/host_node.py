@@ -1,5 +1,5 @@
 from pathlib import Path
-from network.peer import run_peer_test
+from network.peer import run_peer
 from network.ip import get_ip
 from config.config import parse_config
 from crypto.keys.keys_handler import prepare_key_pair_generation
@@ -36,7 +36,7 @@ def start_client(args):
     private_key, public_key = prepare_key_pair_generation(user_path)
 
     # Generate Client Object
-    client = Client(public_key, private_key)
+    client = Client(user_path, public_key, private_key)
 
     # Send public key ao CA
     info = connect_and_register_to_ca(client)
@@ -45,9 +45,6 @@ def start_client(args):
     client.ca_pub_pem = info["ca_pub_pem"]
     client.group_key = info["group_key"]
 
-    print()
-    print(client.group_key)
-    print()
 
     config_name = args[1] if len(args) == 2 else "config_lan"
     client.token_manager = TokenManager(
@@ -66,6 +63,6 @@ def start_client(args):
     print(f"[Client] Token Manager inicializado para {config_name}")
 
     # Host Discovery and Connection Establishment
-    run_peer_test(host, port, args[1], client)
+    run_peer(host, port, client)
 
 

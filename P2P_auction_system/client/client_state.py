@@ -1,7 +1,8 @@
 class Client:
-    def __init__(self, public_key, private_key):
+    def __init__(self, user_path, public_key, private_key):
         self.public_key = public_key
         self.private_key = private_key
+        self.user_path = user_path
         self.cert_pem = None
         self.ca_pub_pem = None
         self.group_key = None

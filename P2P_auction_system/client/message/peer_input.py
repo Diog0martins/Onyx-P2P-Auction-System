@@ -1,5 +1,6 @@
 from client.message.auction.auction_handler import cmd_auction
 from client.message.bid.bid_handler import cmd_bid
+from client.message.status_handler import print_auction_state
 import json
 
 
@@ -48,19 +49,25 @@ def peer_input(client_state):
 
     elif user_input == "exit":
         msg = "exit"
+        return
 
     elif user_input == "help":
         menu_user()
-
+        return
     elif user_input == "status":
-        print(json.dumps(client_state.auctions, indent=4))
-
+        print_auction_state(client_state.auctions)
+        return
     else:
         print("Unknown command.")
         return None
 
+    try:
+        ledger_action = json.loads(msg)
+    except:
+        return
     
-    if client_state.ledger.add_action(msg) == 1:
+    
+    if client_state.ledger.add_action(ledger_action) == 1:
         client_state.ledger.save_to_file(client_state.user_path / "ledger.json") 
 
     return msg

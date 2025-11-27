@@ -1,8 +1,0 @@
-[
-    {
-        "id": 1,
-        "type": "auction",
-        "name": "iron",
-        "min_bid": 300000.0
-    }
-]

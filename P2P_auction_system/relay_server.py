@@ -118,7 +118,7 @@ def main():
     private_key, public_key = prepare_key_pair_generation(user_path)
 
     # 3. Registar na CA
-    relay_client = Client(public_key, private_key)
+    relay_client = Client(user_path, public_key, private_key)
     print("[Relay] A registar na CA...")
     try:
         connect_and_register_to_ca(relay_client)

@@ -145,6 +145,15 @@ class Ledger:
         ledger.max_actions = 3
 
         return ledger
+    
+    def token_used(self, token):
+        for block in self.chain:
+            for action in block.get("events", []):
+                if not action.get("type") == "genesis":
+                    if action.get("token").get("token_id") == token:
+                        return True
+        return False
+
 
 
 

@@ -1,6 +1,8 @@
 import json, random
 from pathlib import Path
 from client.ledger.ledger_logic import Ledger, compare_chains
+from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
+
 
 CONFIG_DIR = Path.cwd() / "config"
 
@@ -59,13 +61,20 @@ def ledger_update_handler(client, ledger_update_message):
 
     ledger = Ledger.from_dict(received_ledger)
 
+    print("Comparing chains:")
     if compare_chains(client.ledger.chain, ledger.chain) == "remote":
+        print("Remote is more updated")
         if ledger.verify_chain():
+            print("Chain verified")
             client.ledger = ledger
 
             client.ledger.save_to_file(client.user_path / "ledger.json") 
 
             client.ledger_request_id = 0
+
+            translated_ledger = ledger_to_auction_dict(client.ledger)
+            print(translated_ledger)
+            client.auctions = translated_ledger
 
 def init_cli_ledger(client, user_path):
     ledger_path = user_path  / "ledger.json"

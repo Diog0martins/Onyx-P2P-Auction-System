@@ -17,7 +17,7 @@ def send_to_peers(msg, connections):
 
 
 # Function to handle messages from peers
-def handle_connection(conn, addr,client_state):
+def handle_connection(conn, addr, client_state):
     print(f"[+] Connected: {addr}")
     buffer = ""
     while True:
@@ -25,15 +25,12 @@ def handle_connection(conn, addr,client_state):
             data = conn.recv(4096)
             if not data:
                 break
-            msg = data.decode()
-            print(msg)
-            buffer += decrypt_message_symmetric(msg, client_state.group_key)
-            print(buffer)
-
-            
+            buffer += data.decode()
             while "\n" in buffer:
-                msg, buffer = buffer.split("\n", 1)
+                c_msg, buffer = buffer.split("\n", 1)
+                msg = decrypt_message_symmetric(c_msg, client_state.group_key)
                 process_message(msg, client_state)
+        
         except ConnectionResetError:
             print(f"[-] Ligação fechada abruptamente por {addr}")
             break
@@ -62,7 +59,7 @@ def accept_incoming(listener, connections, client_state):
             print(f"[!] Error in accept_incoming: {e}")
 
 
-def await_new_peers_conn(state: PeerState, config, client_state):
+def await_new_peers_conn(state: PeerState, client_state):
     while not state.stop_event.is_set():
             try:
                 peer_host, peer_port = state.discovered_peers.get(timeout=1)
@@ -113,7 +110,7 @@ def peer_tcp_handling(client_state):
 
 # ======== ======== ========
 
-def connect_to_relay(state: PeerState, relay_host, relay_port, config, client_state):
+def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
     print(f"[*] A conectar ao RELAY em {relay_host}:{relay_port}...")
     while not state.stop_event.is_set():
         try:
@@ -127,7 +124,7 @@ def connect_to_relay(state: PeerState, relay_host, relay_port, config, client_st
             print(f"[+] Conectado ao Relay com sucesso!")
             state.connections.append(conn)
 
-            handle_connection(conn, (relay_host, relay_port), config, client_state)
+            handle_connection(conn, (relay_host, relay_port), client_state)
 
             print("[!] Conexão ao Relay perdida. A tentar reconectar...")
             if conn in state.connections:

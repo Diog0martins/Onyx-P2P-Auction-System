@@ -75,9 +75,7 @@ def register(req: RegisterReq, request: Request):
     # 5 — group key
     if app.state.KEY_GROUP_BOOL is False:        
         group_key = generate_aes_key()
-        # print("group key:")
         # print(group_key)
-        # print()
         app.state.KEY_GROUP_BOOL = True
         app.state.KEY_GROUP = group_key
         

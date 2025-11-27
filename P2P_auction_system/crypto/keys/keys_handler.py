@@ -3,8 +3,6 @@ from crypto.keys.keys_crypto import generate_key_pair, load_private_and_public_k
 
 def prepare_key_pair_generation(user_path):
     
-    print(user_path)
-
     prv_path = user_path / "private_key.pem"
     pub_path = user_path / "public_key.pem"
 

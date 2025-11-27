@@ -20,7 +20,8 @@ def user_auction_input(connections, stop_event, client):
     request = prepare_ledger_request(client)
 
     if not request == None:
-        send_to_peers(request, client.peer.connections)    
+        c_request = encrypt_message_symmetric(request, client.group_key)
+        send_to_peers(c_request, client.peer.connections)    
 
     menu_user()
 
@@ -36,24 +37,17 @@ def user_auction_input(connections, stop_event, client):
             stop_event.set()
             break
 
-        print(msg)
         msg = encrypt_message_symmetric(msg, client.group_key)
-        print(msg)
-        # print(msg)
 
         if not connections:
             print("[!] Sem conexão ao Relay. Mensagem não enviada.")
             continue
 
         # Enviar para a única conexão que temos (o Relay)
-        for conn in connections[:]:
-            try:
-                conn.sendall(msg.encode())
-            except:
-                connections.remove(conn)
+        send_to_peers(msg, client.peer.connections)
 
 def peer_messaging(state: PeerState, client):
-    threading.Thread(
+    t = threading.Thread(
         target=user_auction_input,
         args=(state.connections, state.stop_event, client),
         daemon=True
@@ -61,7 +55,7 @@ def peer_messaging(state: PeerState, client):
     t.start()
     t.join()
 
-def run_peer_test(host, port, config, client):
+def run_peer(host, port, client):
     # 1. Carregar configuração do Relay dinamicamente
     try:
         relay_host, relay_port = parse_config("configRelay")
@@ -76,18 +70,20 @@ def run_peer_test(host, port, config, client):
     else:
         state = PeerState(host, port, 5000)
 
+    client.peer = state
+
     # 2. Iniciar a conexão persistente ao Relay
     # Substitui o antigo udp_socket e tcp_socket
     relay_thread = threading.Thread(
         target=connect_to_relay,
-        args=(state, relay_host, relay_port, config, client),
+        args=(state, relay_host, relay_port, client),
         daemon=True
     )
     relay_thread.start()
 
     # 3. Iniciar o Menu do Utilizador (Loop Principal)
-    peer_messaging(state, config, client)
-    await_new_peers_conn(state, config, client)
+    peer_messaging(state, client)
+    await_new_peers_conn(state, client)
 
     # --- Cleanup ---
     print("[*] Shutting down peer.")

@@ -1,10 +1,12 @@
 import json
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
 from client.ledger.ledger_handler import load_public_ledger, ledger_request_handler, ledger_update_handler
 
 from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
 
 
-def verify_double_spending(token_id, config):
+
+def verify_double_spending2(token_id, config):
     ledger = load_public_ledger(config)
     for entry in ledger:
         # Verifica se a entrada tem token e se o ID é igual
@@ -14,6 +16,8 @@ def verify_double_spending(token_id, config):
                 return True # Já foi gasto!
     return False
 
+def verify_double_spending(token_id, client):
+    return client.ledger.token_used(token_id)
 
 def update_personal_auctions(client, msg):
 
@@ -21,7 +25,7 @@ def update_personal_auctions(client, msg):
 
         auction_id = msg.get("id")
         min_bid = msg.get("min_bid")
-        add_auction(client.auctions, auction_id, min_bid)
+        add_auction(client.auctions, auction_id, min_bid, "False")
 
     else:
         auction_id = msg.get("auction_id")
@@ -40,8 +44,9 @@ def process_message(msg, client_state):
         return
 
     mtype = obj.get("type")
-
+    print(obj)
     if mtype in ("auction", "bid", "ledger_request", "ledger_update"):
+        
         token_data = obj.get("token")
         if not token_data:
             print(f"[!] Mensagem {mtype} rejeitada: Sem token.")
@@ -54,11 +59,10 @@ def process_message(msg, client_state):
             print(f"[Security] ALERTA: Assinatura do Token inválida na mensagem {obj.get('id')}. Ignorada.")
             return
 
-        """ CORRECT LATER! NO LONGER USING TWO LEDGERS !!!!!!!!! (Diogo)      
-        if verify_double_spending(token_id, config):
+        if verify_double_spending(token_id, client_state):
             print(f"[Security] ALERTA: Tentativa de Double Spending (Token {token_id}). Ignorada.")
             return
-        """
+
         if mtype in ("auction", "bid"):
             if client_state.ledger.add_action(obj) == 1:
                 client_state.ledger.save_to_file(client_state.user_path / "ledger.json") 
@@ -69,9 +73,12 @@ def process_message(msg, client_state):
 
         elif mtype == "ledger_request":
             from network.tcp import send_to_peers
-            print("Received request for ledger!")
             update_json = ledger_request_handler(obj.get("request_id"), client_state)
-            send_to_peers(update_json, client_state.peer.connections)
+            
+            c_update_json = encrypt_message_symmetric(update_json, client_state.group_key)
+
+            
+            send_to_peers(c_update_json, client_state.peer.connections)
         
         elif mtype == "ledger_update":
             if not client_state.ledger_request_id == 0:

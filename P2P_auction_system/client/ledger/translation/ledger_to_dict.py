@@ -1,12 +1,7 @@
 import json
 
 def parse_event(event):
-    """Normalize event into a Python dict.
-    Events may arrive as:
-    - None
-    - dict
-    - JSON-encoded string
-    """
+
     if event is None:
         return None
 
@@ -24,76 +19,112 @@ def parse_event(event):
 
     return None
 
+# -------------------------------
+#   EVENT HANDLERS
+# -------------------------------
 
-# -------------------------------  
-#   EVENT HANDLERS  
-# -------------------------------  
+def _ensure_auction_entry(auctions, auction_id):
+    """Ensure an auction entry exists in auction_list and return its key as int."""
+    try:
+        key = int(auction_id)
+    except (TypeError, ValueError):
+        return None
+
+    if key not in auctions["auction_list"] or not isinstance(auctions["auction_list"][key], dict):
+        auctions["auction_list"][key] = {
+            "highest_bid": 0.0,
+            "my_bid": False
+        }
+    return key
+
 
 def handle_auction_open(auctions, event):
-    """Process an auction creation event."""
     auction_id = event.get("id")
-    min_bid = event.get("min_bid", 0)
+    min_bid = event.get("min_bid", 0.0)
 
     if auction_id is None:
         return
 
-    auctions["auction_list"][auction_id] = min_bid
+    key = _ensure_auction_entry(auctions, auction_id)
+    if key is None:
+        return
 
-    # Update last_auction_id if needed
-    if auction_id > auctions["last_auction_id"]:
-        auctions["last_auction_id"] = auction_id
+    current = auctions["auction_list"][key].get("highest_bid", 0.0)
+    auctions["auction_list"][key]["highest_bid"] = max(current, float(min_bid))
+
+    try:
+        auctions["last_auction_id"] = max(int(auctions.get("last_auction_id", 0)), key)
+    except (TypeError, ValueError):
+        pass
 
 
 def handle_bid_event(auctions, event):
-    """Process a bid event and update highest bid."""
     auction_id = event.get("auction_id")
     bid = event.get("bid")
 
     if auction_id is None or bid is None:
         return
 
-    # Only update if auction exists
-    if auction_id in auctions["auction_list"]:
-        # Only update when higher
-        if bid > auctions["auction_list"][auction_id]:
-            auctions["auction_list"][auction_id] = bid
+    key = _ensure_auction_entry(auctions, auction_id)
+    if key is None:
+        return
+
+    try:
+        bid_val = float(bid)
+    except (TypeError, ValueError):
+        return
+
+    current = auctions["auction_list"][key].get("highest_bid", 0.0)
+    if bid_val > current:
+        auctions["auction_list"][key]["highest_bid"] = bid_val
+        auctions["auction_list"][key]["my_bid"] = False
 
 
 def handle_auction_end(auctions, event):
-    """Process an auction_end event."""
     auction_id = event.get("auction_id")
-    if auction_id in auctions["auction_list"]:
-        del auctions["auction_list"][auction_id]
+    if auction_id is None:
+        return
+
+    try:
+        key = int(auction_id)
+    except (TypeError, ValueError):
+        return
+
+    if key in auctions["auction_list"]:
+        del auctions["auction_list"][key]
 
 
-# -------------------------------  
-#   MAIN TRANSLATION FUNCTION  
-# -------------------------------  
+# -------------------------------
+#   MAIN TRANSLATION FUNCTION
+# -------------------------------
 
 def ledger_to_auction_dict(ledger):
-    
     auctions = {
         "last_auction_id": 0,
         "auction_list": {},
         "my_auctions": {},
     }
 
-    for block in ledger.chain:
+    for block in getattr(ledger, "chain", []) or []:
         events = block.get("events", [])
         for raw_event in events:
             event = parse_event(raw_event)
             if not event:
-                continue  # skip nulls
+                continue
 
             event_type = event.get("type")
-
             if event_type == "auction":
                 handle_auction_open(auctions, event)
-
             elif event_type == "bid":
                 handle_bid_event(auctions, event)
-
             elif event_type == "auction_end":
                 handle_auction_end(auctions, event)
+
+    try:
+        keys = [int(k) for k in auctions["auction_list"].keys() if str(k).isdigit()]
+        if keys:
+            auctions["last_auction_id"] = max(auctions.get("last_auction_id", 0), max(keys))
+    except Exception:
+        pass
 
     return auctions
