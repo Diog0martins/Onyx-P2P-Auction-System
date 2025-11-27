@@ -1,11 +1,15 @@
 import threading
 import sys
 from network.peer_state import PeerState
-from network.tcp import connect_to_relay
+from network.udp import peer_udp_handling
+from network.tcp import peer_tcp_handling, await_new_peers_conn
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
 
 from client.message.peer_input import peer_input, menu_user
 from config.config import parse_config
 from local_test import TEST
+
+from P2P_auction_system.network.tcp import connect_to_relay
 
 
 def user_auction_input(connections, stop_event, config, client):
@@ -23,7 +27,11 @@ def user_auction_input(connections, stop_event, config, client):
             stop_event.set()
             break
 
-        # Verificar se estamos ligados ao Relay
+        print(msg)
+        msg = encrypt_message_symmetric(msg, client.group_key)
+        print(msg)
+        # print(msg)
+
         if not connections:
             print("[!] Sem conexão ao Relay. Mensagem não enviada.")
             continue
@@ -72,6 +80,7 @@ def run_peer_test(host, port, config, client):
 
     # 3. Iniciar o Menu do Utilizador (Loop Principal)
     peer_messaging(state, config, client)
+    await_new_peers_conn(state, config, client)
 
     # --- Cleanup ---
     print("[*] Shutting down peer.")

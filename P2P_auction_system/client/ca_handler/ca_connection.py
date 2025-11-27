@@ -27,7 +27,7 @@ def connect_and_register_to_ca(client):
         csr_pem = create_x509_csr(
             private_key=client.private_key,
             public_key=client.public_key,
-            common_name="AnonymousPeer",
+            common_name="AnonymousPeer",      # goes into CSR subject CN
             meta={"display_name": "P2P User"}
         )
     except Exception as e:
@@ -54,5 +54,6 @@ def connect_and_register_to_ca(client):
         "uid": data["uid"],
         "cert_pem": b64d(data["cert_pem_b64"]),
         "ca_pub_pem": b64d(data["ca_pub_pem_b64"]),
+        "group_key": b64d(data["group_key_b64"]),
         "token_quota": data["token_quota"],
     }
