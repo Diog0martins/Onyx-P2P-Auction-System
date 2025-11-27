@@ -25,7 +25,7 @@ def start_client(args):
         config = args[1]
         user_path = Path("config") / config / "user"
         print("Peer info fetched from config file")
-        user_id, host, port = parse_config(config)
+        host, port = parse_config(config)
     
     else: 
         #LAN Case -> For the Future
@@ -40,7 +40,7 @@ def start_client(args):
     private_key, public_key = prepare_key_pair_generation(user_path)
 
     # Generate Client Object
-    client = Client(user_id, public_key, private_key)
+    client = Client(public_key, private_key)
 
     # Send public key ao CA
     info = connect_and_register_to_ca(client)
