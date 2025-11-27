@@ -97,3 +97,30 @@ def peer_tcp_handling(state: PeerState, config, client_state):
     return listener
 
 # ======== ======== ========
+
+def connect_to_relay(state: PeerState, relay_host, relay_port, config, client_state):
+    print(f"[*] A conectar ao RELAY em {relay_host}:{relay_port}...")
+    while not state.stop_event.is_set():
+        try:
+            if len(state.connections) > 0:
+                state.stop_event.wait(5)
+                continue
+
+            conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            conn.connect((relay_host, relay_port))
+
+            print(f"[+] Conectado ao Relay com sucesso!")
+            state.connections.append(conn)
+
+            handle_connection(conn, (relay_host, relay_port), config, client_state)
+
+            print("[!] Conexão ao Relay perdida. A tentar reconectar...")
+            if conn in state.connections:
+                state.connections.remove(conn)
+
+        except ConnectionRefusedError:
+            print("[!] Relay indisponível. A tentar novamente em 3s...")
+            state.stop_event.wait(3)
+        except Exception as e:
+            print(f"[!] Erro na ligação ao Relay: {e}")
+            state.stop_event.wait(3)
