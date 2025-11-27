@@ -2,6 +2,7 @@ import threading
 from network.peer_state import PeerState
 from network.udp import peer_udp_handling
 from network.tcp import peer_tcp_handling, await_new_peers_conn
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
 
 from client.message.peer_input import peer_input, menu_user
 
@@ -23,6 +24,10 @@ def user_auction_input(connections, stop_event, config, client):
             stop_event.set()
             break
 
+        print(msg)
+        msg = encrypt_message_symmetric(msg, client.group_key)
+        print(msg)
+        # print(msg)
         # Enviar a todos los peers
         for conn in connections[:]:
             try:

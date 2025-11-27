@@ -56,5 +56,15 @@
             "token_id": "02a025c92b460cfa02d24e9cc8bda388",
             "token_sig": "kzYhaVt0KvQWuVgwjN+OLKxzgrcF9aaKCFrKU3G+qJvOcwhV4cdnUXm55TiiPZ6xDEvAuMGf9t5yEcOJzZpaz6HLRZFvog+cpEj5IZtIkaayC3gsJejaK8F9IfiZMFpFgv07S/U8/Z8pw9Aq8kJbRi9DkKi6RLz7spWXCmKmR+9jk7gc4bRNtAp8tOIDZgkRtVj/s9xljVfUcjFeUYQguYSQuFP2suxfMTmj56gFWE3a0GW2NH1SzFdModN99A5tfqmlMwTjvM0E77hfkpjn+Q3Uml1pgufihUoBGAJEcUsQA4RBTmhqJfUqibIah8L9463jqns2WNTtfvxRXgWfMw=="
         }
+    },
+    {
+        "id": 10,
+        "type": "auction",
+        "name": "nose",
+        "min_bid": 50.0,
+        "token": {
+            "token_id": "2f3560159885e23d808b9603ff59c6e3",
+            "token_sig": "BOpwyce4giGXLPscPvMtwlCQx3A6jMtMJuoAyti90d8FGyd04sXJP4M4DE9MjoYkuRPO8q4hc1n/6i0PAnX2urv8IQ6dFpS0ahqyL6QaXmpsTFCGTAuCvyLszw/ocn8pHLzSMuCBTktOadtdAGMiZ7uh3g4FXCNdLr2V2rYu+6J3X7ZeOid+M7AMeU4g/1mAPpkvh6jIUwDAH5ldmPImxTwNorDl4o80KZlaxW0lL/jmDiTz0q9zQyZgMibgF3N0Tt3e3g0rTe3YGipUTSfIqccSYZNX6/VLkBEwL0vBJlyAgLd4WuT0aE2T+Tmib2A/qF5OLivqMlEGEONX0UrqYQ=="
+        }
     }
 ]

@@ -16,6 +16,8 @@ from crypto.keys.keys_crypto import get_pub_bytes
 from ca.ca_api.BlindTokens import BlindSignReq
 from crypto.encoding.b64 import b64e, b64d
 
+from crypto.keys.keys_crypto import generate_aes_key
+
 
 
 # FastAPI Service Instance
@@ -70,11 +72,22 @@ def register(req: RegisterReq, request: Request):
         cert_pem
     )
 
-    # 5 — return cert + CA public key
+    # 5 — group key
+    if app.state.KEY_GROUP_BOOL is False:        
+        group_key = generate_aes_key()
+        # print("group key:")
+        # print(group_key)
+        # print()
+        app.state.KEY_GROUP_BOOL = True
+        app.state.KEY_GROUP = group_key
+        
+
+    # 6 — return cert + CA public key + pub_key_group
     return RegisterResp(
         uid=uid,
         cert_pem_b64=b64e(cert_pem),
         ca_pub_pem_b64=b64e(get_pub_bytes(request.app.state.CA_VK)),
+        group_key_b64=b64e(request.app.state.KEY_GROUP),
         token_quota=0
     )
 
@@ -134,3 +147,21 @@ def blind_sign(req: BlindSignReq, request: Request):
     sig_bytes = signature_int.to_bytes((n.bit_length() + 7) // 8, "big")
 
     return {"blind_signature_b64": b64e(sig_bytes)}
+
+# @app.post("/leave")
+# def leave_network(req: dict):
+#     uid = req["uid"]
+
+#     # 1. Remove from active peers
+#     if uid in app.state.ACTIVE_PEERS:
+#         app.state.ACTIVE_PEERS.remove(uid)
+
+#     # 2. Generate new AES key
+#     new_key = generate_aes_key()
+#     app.state.GROUP_AES_KEY = new_key
+
+#     # 3. Broadcast to everyone
+#     broadcast_new_group_key(new_key)
+
+#     return {"status": "ok"}
+
