@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "type": "auction",
+        "name": "exemplo",
+        "min_bid": 20.0,
+        "token": {
+            "token_id": "b3383a18f53c03f5c5efea113809c907",
+            "token_sig": "DsqVFVHXJgURn8qNsaBKiioauZRyu783tXluRLxcs/v9mqBtlyN97FlEl8/LLuMWowZKsxA1hgjr+5buLdMhglKRhMRpMlRoBrmC3Ds3IpDE5wk/8h8evJF1HwDEYBFSlwNlLq8BkH72kpW+YyfDXEhquR1pE/4s8aCMTjAC6ByWXe/PZq7OaBPM4X5jav+PK+Vu5AV9NwJy7xYeNveb0AcDPlOsXTGOhNEuYKP82XimouxFb045IZ9m4Znqndvb7xAP7KtuwvoUEY8LlQ6lanfV+aFPrLf/DLzWxxD9dms2ulqgVZIoLE4TDrgX90ueQ41U6qJ1iyU6+xtDy4lN4A=="
+        }
+    }
+]

@@ -1,6 +1,7 @@
 import threading
 import sys
 from network.peer_state import PeerState
+from network.tcp import connect_to_relay
 from network.udp import peer_udp_handling
 from network.tcp import peer_tcp_handling, await_new_peers_conn
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
@@ -8,9 +9,6 @@ from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
 from client.message.peer_input import peer_input, menu_user
 from config.config import parse_config
 from local_test import TEST
-
-from P2P_auction_system.network.tcp import connect_to_relay
-
 
 def user_auction_input(connections, stop_event, config, client):
     menu_user(config)
