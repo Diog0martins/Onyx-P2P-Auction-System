@@ -53,3 +53,17 @@ config/*
 !config/**/config*.json
 
 repomix-output.xml
+
+# Public keys
+**/public_key.pem
+
+# Private keys
+**/private_key.pem
+
+# CA database
+ca/ca.db
+
+# User ledgers
+config/**/user/ledger.json
+config/**/user/token_wallet.json
+

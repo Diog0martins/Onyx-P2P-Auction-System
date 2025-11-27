@@ -12,7 +12,7 @@ CA_URL = "http://127.0.0.1:8443"
 
 class TokenManager:
     def __init__(self, config_name: str, ca_pub_pem: bytes, uid: str):
-        self.config_dir = Path("config") / config_name
+        self.config_dir = Path("config") /config_name / "user"
         self.wallet_path = self.config_dir / "token_wallet.json"
         self.uid = uid
         self.ca_pub = serialization.load_pem_public_key(ca_pub_pem)
