@@ -9,19 +9,19 @@ from client.token_manager import TokenManager
 from client.ledger.ledger_handler import init_cli_ledger
 from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
 
+
 def check_user_path(user_path):
     if not user_path.exists():
         user_path.mkdir(parents=True, exist_ok=True)
 
 
 def start_client(args):
-
     # Verify if we are working in LAN or localhost
     if len(args) == 2:
         config = args[1]
         user_path = Path("config") / config / "user"
         print("Peer info fetched from config file")
-        user_id, host, port = parse_config(config)
+        host, port = parse_config(config)
     
     else: 
         #LAN Case -> For the Future
@@ -36,13 +36,18 @@ def start_client(args):
     private_key, public_key = prepare_key_pair_generation(user_path)
 
     # Generate Client Object
-    client = Client(user_id, user_path, public_key, private_key)
+    client = Client(public_key, private_key)
 
     # Send public key ao CA
     info = connect_and_register_to_ca(client)
 
     client.cert_pem = info["cert_pem"]
     client.ca_pub_pem = info["ca_pub_pem"]
+    client.group_key = info["group_key"]
+
+    print()
+    print(client.group_key)
+    print()
 
     config_name = args[1] if len(args) == 2 else "config_lan"
     client.token_manager = TokenManager(

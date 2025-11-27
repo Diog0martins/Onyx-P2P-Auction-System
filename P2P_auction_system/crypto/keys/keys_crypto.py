@@ -57,3 +57,8 @@ def generate_key_pair():
     )
 
     return private_pem, public_pem
+
+import os
+
+def generate_aes_key() -> bytes:
+    return os.urandom(32)
