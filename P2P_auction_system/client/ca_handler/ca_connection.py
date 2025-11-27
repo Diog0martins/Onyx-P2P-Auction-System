@@ -54,5 +54,6 @@ def connect_and_register_to_ca(client):
         "uid": data["uid"],
         "cert_pem": b64d(data["cert_pem_b64"]),
         "ca_pub_pem": b64d(data["ca_pub_pem_b64"]),
+        "group_key": b64d(data["group_key_b64"]),
         "token_quota": data["token_quota"],
     }

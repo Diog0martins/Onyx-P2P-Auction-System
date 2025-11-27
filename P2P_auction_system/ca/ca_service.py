@@ -36,6 +36,7 @@ def run_ca():
 
     app.state.CA_SK = ca_sk
     app.state.CA_VK = ca_vk
+    app.state.KEY_GROUP_BOOL = False
     
     uvicorn.run(
         app,

@@ -46,8 +46,4 @@ def cmd_auction(config, name, bid, token_manager):
     print(auction_json)
     print()
 
-    ##########################################################
-    # TODO: broadcast auction_json to other users            #
-    ##########################################################
-
     return auction_json
