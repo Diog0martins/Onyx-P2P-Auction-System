@@ -24,5 +24,15 @@
             "token_id": "cbc75240e60b64c2a9248a164a1aa622",
             "token_sig": "eKyeFsUw1oETfYYMJ+kk7dt3mu2hy+kATHadrE3xF7v6fRkBJb7RInlUZl1wlPiifDFluDZKj0S35zzOw3Klumrvb8ObyqooaKWu1co83VsXL2cVjXQEm6MaSi17quD0rgcFJvm1nd+W8OzAvAWlegyelUPlDsquckEiFw6bdg0FYZ5UI/E4eX7BCJCuLoQu2PSGqSy6f+MQExRDiVWA/aaFLzZmy0N4Q5OYLzmusuPoB7CmFPs/4ZeGve0yUaAOK2gGJs6V44k6YVeQZggJFD7eP04ithIYUUlrQ3MEbVCfRnCl6FUVN/8e3v2ROuRoz1Ngh/3M+mJ5o2/WrqizdQ=="
         }
+    },
+    {
+        "id": 11,
+        "type": "auction",
+        "name": "minions",
+        "min_bid": 10.0,
+        "token": {
+            "token_id": "23be490a1177a7e3955a26c4d4758af9",
+            "token_sig": "RHSKpXjXkFA2kgHKm6b8ibaB+TmOlC8mgBiGNWZPBxBoBnEROoUGBYEldnRAkCbHFoXjcl2FW6NneDEtyMpUCx0MbadoQkZCrp+kFy0/CSl4Kp/urV7uMlPXAyW6xv/X0TlJv/0zkPmaHZzLr4hLclb93xOYx8YGzyNTrbuJCJo8id31ch2az3b8YAYjt25GRL44tZnch3n8hsr43ZFpirujKQE8l2UQHQQEXEX9NMe8MNdqVHVAE7CgcK9hvv/KBYaR1g2QZPtnbiio6ug10P2SXPGX4IBM0WFK5e/xQkdDO+QayQZnGY02fcXNeCSED6QVS6RJSiPhOdy4gAP8HQ=="
+        }
     }
 ]

@@ -66,5 +66,15 @@
             "token_id": "2f3560159885e23d808b9603ff59c6e3",
             "token_sig": "BOpwyce4giGXLPscPvMtwlCQx3A6jMtMJuoAyti90d8FGyd04sXJP4M4DE9MjoYkuRPO8q4hc1n/6i0PAnX2urv8IQ6dFpS0ahqyL6QaXmpsTFCGTAuCvyLszw/ocn8pHLzSMuCBTktOadtdAGMiZ7uh3g4FXCNdLr2V2rYu+6J3X7ZeOid+M7AMeU4g/1mAPpkvh6jIUwDAH5ldmPImxTwNorDl4o80KZlaxW0lL/jmDiTz0q9zQyZgMibgF3N0Tt3e3g0rTe3YGipUTSfIqccSYZNX6/VLkBEwL0vBJlyAgLd4WuT0aE2T+Tmib2A/qF5OLivqMlEGEONX0UrqYQ=="
         }
+    },
+    {
+        "id": 11,
+        "type": "auction",
+        "name": "wonka",
+        "min_bid": 5.0,
+        "token": {
+            "token_id": "59b03ef9553758f0a5fcedc2de60c163",
+            "token_sig": "sZW9/IYnfYyCQ504Par92R/nlxIL0vQjpFQHHpOtgQUyWYOsTGuHKwy6WXl3TsPipgBdAQl5Br0XF5ijEUgvxdo1bqhA58WkHvrWSnzuXAHUslU1SpOw+qT0cN7HzvRpTwMDe0/l/1hEuc4qUDE47oiHEwOg4JjLGH5l1XpSKn+xcAyFiJGVJLVVL9HY3SB6+qf65VHQc/NaiLhtaSva9PvqZaYluzAGWLsitG3aYsJtafSNnE4iRE62XfJA1D0uaebGnGffE4lpS9xGG46IW9p7EAK9XANaWbZYtUcmyFbdrEXyMAHpaynwiinzyHzSGZMVJA8zs83R9sO7tBE1TA=="
+        }
     }
 ]
