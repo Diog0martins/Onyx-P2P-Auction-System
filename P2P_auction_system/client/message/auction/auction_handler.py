@@ -1,27 +1,16 @@
 import json
-from client.ledger.ledger_handler import load_public_ledger, save_public_ledger, load_local_ledger, save_local_ledger
 
-
-def cmd_auction(config, name, bid, token_manager):
+def cmd_auction(client, name, bid):
 
     try:
-        token_data = token_manager.get_token()
+        token_data = client.token_manager.get_token()
     except Exception as e:
         print(f"[!] Não foi possível criar Auction: {e}")
         return None
 
-    # Load existing ledger
-    public_ledger = load_public_ledger(config)
-    local_ledger = load_local_ledger(config)
+    auction_id = generate_next_auction_id(client.auctions)
 
-    # Generate progressive auction_id
-    if len(public_ledger) == 0:
-        auction_id = 1
-    else:
-        # Get the LAST id among auctions
-        auction_id = max(item.get("id", 0) for item in public_ledger) + 1
-
-    # Broadcast version (no owner)
+    # Broadcast version
     auction_obj = {
         "id": auction_id,
         "type": "auction",
@@ -30,11 +19,7 @@ def cmd_auction(config, name, bid, token_manager):
         "token": token_data
     }
 
-    # Save locally
-    public_ledger.append(auction_obj)
-    local_ledger.append(auction_obj)
-    save_public_ledger(public_ledger, config)
-    save_local_ledger(local_ledger, config)
+    add_my_auction(client.auctions, auction_id, "trash", "trash", bid)
 
     print()
     print(f"Auction created with ID {auction_id}")
@@ -46,8 +31,54 @@ def cmd_auction(config, name, bid, token_manager):
     print(auction_json)
     print()
 
-    ##########################################################
-    # TODO: broadcast auction_json to other users            #
-    ##########################################################
-
     return auction_json
+
+
+# ----- Utilities to have in run auction data -----
+
+def add_auction(auctions, auction_id, highest_bid):
+    if auction_id in auctions["auction_list"]:
+        return False
+
+    if auctions["last_auction_id"] < auction_id:
+        auctions["last_auction_id"] = auction_id
+
+    auctions["auction_list"][auction_id] = {
+        "highest_bid": highest_bid,
+        "my_bid": True
+    }
+    return True
+
+def get_auction_higher_bid(auctions: dict, auction_id: int):
+    auction = auctions["auction_list"].get(auction_id)
+    return auction["highest_bid"] if auction else None
+
+def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid):
+    if auction_id not in auctions["auction_list"]:
+        return False
+
+    auctions["auction_list"][auction_id]["highest_bid"] = new_bid
+    auctions["auction_list"][auction_id]["my_bid"] = is_my_bid
+    
+    return True
+
+def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid):
+    added = add_auction(auctions, auction_id, starting_bid)
+    if not added:
+        return False
+
+    auctions["my_auctions"][auction_id] = {
+        "public_key": public_key,
+        "private_key": private_key
+    }
+
+    return True
+
+def generate_next_auction_id(auctions):
+    next_id = int(auctions["last_auction_id"]) + 1
+    auctions["last_auction_id"] = next_id
+    return next_id
+
+
+def check_auction_existence(auctions, auction_id):
+    return auction_id in auctions.get("auction_list", {})

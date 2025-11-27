@@ -1,39 +1,17 @@
 from client.message.auction.auction_handler import cmd_auction
 from client.message.bid.bid_handler import cmd_bid
-from client.ledger.ledger_handler import load_public_ledger, load_local_ledger
+import json
 
-def print_auctions(config):
-    public_ledger = load_public_ledger(config)
-    local_ledger = load_local_ledger(config)
 
-    # Crear lista de IDs de auctions propias
-    my_auction_ids = [entry["id"] for entry in local_ledger if entry.get("type") == "auction"]
-
-    # Filtrar auctions públicas que NO son nuestras
-    auctions = [
-        entry for entry in public_ledger
-        if entry.get("type") == "auction" and entry.get("id") not in my_auction_ids
-    ]
-
-    if not auctions:
-        print("No available auctions (not yours).")
-        return
-
-    print("\nAvailable auctions:")
-    for a in auctions:
-        print(f"ID {a['id']} | {a['name']} | min bid: {a['min_bid']}")
-
-def menu_user(config):
-
-    print_auctions(config)
+def menu_user():
 
     print("\nAvailable commands:")
     print(" /bid {auction_id} {min_bid}")
     print(" /auction {name} {min_bid}")
-    # print(" /status")
+    print(" /status")
     print(" /exit\n")
 
-def peer_input(config, client_state):
+def peer_input(client_state):
 
     user_input = input().strip()
     parts = user_input.split()
@@ -52,7 +30,7 @@ def peer_input(config, client_state):
         auction_id = parts[1]
         min_bid = parts[2]
 
-        msg = cmd_bid(config, auction_id, min_bid, client_state.token_manager)
+        msg = cmd_bid(auction_id, min_bid, client_state)
 
     elif command == "auction":
         if len(parts) < 3:
@@ -66,16 +44,24 @@ def peer_input(config, client_state):
             print("Invalid number for min_bid")
             return None
 
-        msg = cmd_auction(config, auction_name, min_bid, client_state.token_manager)
-    # elif user_input == "status":
-    #     msg = cmd_status()
-    #     msg = "nothing"
+        msg = cmd_auction(client_state, auction_name, min_bid)
+
     elif user_input == "exit":
         msg = "exit"
+
     elif user_input == "help":
         menu_user()
+
+    elif user_input == "status":
+        print(json.dumps(client_state.auctions, indent=4))
+
     else:
         print("Unknown command.")
+        return None
+
+    
+    if client_state.ledger.add_action(msg) == 1:
+        client_state.ledger.save_to_file(client_state.user_path / "ledger.json") 
 
     return msg
 

@@ -1,6 +1,3 @@
-import sys
-import json
-import os
 from pathlib import Path
 from network.peer import run_peer_test
 from network.ip import get_ip
@@ -9,16 +6,13 @@ from crypto.keys.keys_handler import prepare_key_pair_generation
 from client.client_state import Client 
 from client.ca_handler.ca_connection import connect_and_register_to_ca
 from client.token_manager import TokenManager
-
-CONFIG_DIR = Path.cwd() / "config"
-
-def ensure_config_dir_test(argv):
-    (CONFIG_DIR / argv).mkdir(parents=True, exist_ok=True)
-
+from client.ledger.ledger_handler import init_cli_ledger
+from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
 
 def check_user_path(user_path):
     if not user_path.exists():
         user_path.mkdir(parents=True, exist_ok=True)
+
 
 def start_client(args):
 
@@ -31,7 +25,7 @@ def start_client(args):
     
     else: 
         #LAN Case -> For the Future
-        user_path = Path("/user")
+        user_path = Path("user")
         host = get_ip()
         port = 6000
         print("LAN Case: Not implemented!")
@@ -42,7 +36,7 @@ def start_client(args):
     private_key, public_key = prepare_key_pair_generation(user_path)
 
     # Generate Client Object
-    client = Client(user_id, public_key, private_key)
+    client = Client(user_id, user_path, public_key, private_key)
 
     # Send public key ao CA
     info = connect_and_register_to_ca(client)
@@ -56,6 +50,14 @@ def start_client(args):
         ca_pub_pem=client.ca_pub_pem,
         uid=info["uid"]
     )
+
+    #Get last used ledger
+    init_cli_ledger(client, user_path)
+
+    if not len(client.ledger.chain) == 1:
+        client.auctions = ledger_to_auction_dict(client.ledger)
+
+
     print(f"[Client] Token Manager inicializado para {config_name}")
 
     # Host Discovery and Connection Establishment

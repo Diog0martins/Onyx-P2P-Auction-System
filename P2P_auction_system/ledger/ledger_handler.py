@@ -43,14 +43,15 @@ def prepare_ledger_request(client):
 
     client.ledger_request_id = random.randint(1, 1000000000)
 
-    update_obj = {
+    upadte_obj = {
         "request_id": client.ledger_request_id,
         "type": "ledger_request",
         "token": token_data
     }
 
-    update_json = json.dumps(update_obj)
-    return update_json
+    upadte_json = json.dumps(upadte_obj)
+    print(upadte_json)
+    return upadte_json
 
 
 def ledger_update_handler(client, ledger_update_message):   

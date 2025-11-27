@@ -1,0 +1,14 @@
+[
+  {
+    "height": 0,
+    "prev_hash": "0",
+    "timestamp": "2025-11-26T23:16:03.376883Z",
+    "events": [
+      {
+        "type": "genesis",
+        "description": "Ledger initialized"
+      }
+    ],
+    "block_hash": "d13806378102429ae07d5f7f42ca8aa841759032d45ada5a413ebe19c85aaa13"
+  }
+]

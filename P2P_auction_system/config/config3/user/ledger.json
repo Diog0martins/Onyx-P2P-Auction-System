@@ -1,0 +1,52 @@
+[
+  {
+    "height": 0,
+    "prev_hash": "0",
+    "timestamp": "2025-11-23T00:29:36.687898Z",
+    "events": [
+      {
+        "type": "genesis",
+        "description": "Ledger initialized"
+      }
+    ],
+    "block_hash": "bafb0300c4da55c36fcc8d140c4537530b8243da70fed88b626ad78859b77f32"
+  },
+  {
+    "height": 1,
+    "prev_hash": "bafb0300c4da55c36fcc8d140c4537530b8243da70fed88b626ad78859b77f32",
+    "timestamp": "2025-11-23T00:38:07.173789Z",
+    "events": [
+      {
+        "id": 1,
+        "type": "auction",
+        "name": "joao_miguel",
+        "min_bid": 30000.0,
+        "token": {
+          "token_id": "b89a5cf010bf3af8d9ad93826cf78aa9",
+          "token_sig": "KXeZQD7Rsu/EVMW6yjtSFlkOvj0RV/AMa5P+eFy40lAvdVlWyWwEt5WkATYAR/q3dxA5l89bieNXyv4zY4tXmei+dYmFcSESamhO+ZD+GSNUIXJrRgmOa5gSWrmCS95nmeRKHh9xsBNJdXGowfU2WserIMM9g2IFCNDF75H/7k4FSqrg4GZEdTPLM4R4i7I8D8cLsyKxF/VyelTQd3R6N7MjIW3rdGa42f0iSUfAn/GF30M8JhUc3S39jTol9UlZIUBT11nhBHHnwaKTwG890O4GVYYQMRHyBQB+jHprxkfgA4hMhsao18FZrXKuCYq9gmLRRaikcERb5K0LOfiEMg=="
+        }
+      },
+      {
+        "id": 1,
+        "type": "auction",
+        "name": "kiko",
+        "min_bid": 333484.0,
+        "token": {
+          "token_id": "b4cdb9ea7ae3961dbd9aed18ee427b91",
+          "token_sig": "veC+1Za2UdzfS3/xFB6ErOCeB6cbsqR0R2T5WYL1c7Nan2rmfL3fXyXLjOGVRJxzWW2jQYXLvNTC/xIvPz1xrsbXNx6k7Q5GIRr71hf9+LGd/QJ7KGBo1rYlKql3616+uxfuXV/qfFlDd2Q2AcLGYcpFCtXwQ5/Ve5YMvXDg3zWT3CEsGsaqCznn9zAokyx8TwdXqpY0gemU/tK55rtWCwiEWn4dToEh1RHa5u055Z/LHaGmY5XxMKhnuV83VMSwlV7jlszKWGDAHWz3FIU9aVnAwukgIrIUF1A/hh6WLyfq9taeKEMY5nP57xF54KbtztQPBwDhZglc5I/7pGPGPQ=="
+        }
+      },
+      {
+        "id": 11,
+        "type": "bid",
+        "auction_id": 1,
+        "bid": 2000.0,
+        "token": {
+          "token_id": "a360f6d4cd49fbddf0d7c116f8e87087",
+          "token_sig": "ufGTY+i5DlmlEjaqFpImlUqdm6K+zwbxLfm7GoCKi2KBZqMSJJzJXOLSXDNo/UD0dgdY5tLukKk+/c8vFCa/Seue0KgqmWeJ/oXhZgYuuxDkE48k9FD1/DfDtP+RQ/upxbpbXDOAYRqcA0WY6bONllWzTOXZXBAL29cefM7Z1b9Fbskz9Vr7JHa8Cb21nanqpASn2rmRJ7ZAmPHT0iVlhR7kirIJarpMHW+Xc5az+qAtwd3ddCkErs3KqcebqOGOdQrtArFXiGFSk0Fyae8jTjb8c6SKX2ZFBvt4y0u9CozQA8qi8HbliKIck+1F+o8TS8FD//JXzn79PdgaNk4N6Q=="
+        }
+      }
+    ],
+    "block_hash": "4504af9f430d4237978bb324af0e6bf6bc1d4aa0ea0687a318f9a724c34a03b8"
+  }
+]
