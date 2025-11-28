@@ -5,7 +5,6 @@ import json
 
 
 def menu_user():
-
     print("\nAvailable commands:")
     print(" /bid {auction_id} {min_bid}")
     print(" /auction {name} {min_bid}")
@@ -14,11 +13,15 @@ def menu_user():
 
 def peer_input(client_state):
 
-    user_input = input().strip()
+    try:
+        user_input = input("Cmd> ").strip()
+    except EOFError:
+        return "exit"
+
     parts = user_input.split()
 
     if len(parts) == 0: return None
-    command = parts[0]
+    command = parts[0].lower()
     msg = None
 
     command = parts[0]
@@ -47,28 +50,28 @@ def peer_input(client_state):
 
         msg = cmd_auction(client_state, auction_name, min_bid)
 
-    elif user_input == "exit":
-        msg = "exit"
-        return
+    elif command == "exit":
+        return "exit"
 
     elif user_input == "help":
         menu_user()
-        return
+        return None
+
     elif user_input == "status":
         print_auction_state(client_state.auctions)
-        return
+        return None
+
     else:
         print("Unknown command.")
         return None
 
     try:
         ledger_action = json.loads(msg)
+        if client_state.ledger.add_action(ledger_action) == 1:
+            client_state.ledger.save_to_file(client_state.user_path / "ledger.json")
     except:
-        return
-    
-    
-    if client_state.ledger.add_action(ledger_action) == 1:
-        client_state.ledger.save_to_file(client_state.user_path / "ledger.json") 
+        pass
+
 
     return msg
 

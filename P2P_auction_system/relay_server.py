@@ -1,6 +1,7 @@
 import socket
 import threading
 import sys
+import json
 import time
 from pathlib import Path
 
@@ -8,12 +9,13 @@ from config.config import parse_config
 from client.client_state import Client
 from client.ca_handler.ca_connection import connect_and_register_to_ca
 from crypto.keys.keys_handler import prepare_key_pair_generation
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
 
 # Lista global de conexões
 RELAY_CONNECTIONS = []
 RELAY_LOCK = threading.Lock()
 STOP_EVENT = threading.Event()
-
+RELAY_GROUP_KEY = None
 
 def handle_client(conn, addr):
     print(f"[Relay] Peer conectado: {addr}")
@@ -54,6 +56,25 @@ def handle_client(conn, addr):
     with RELAY_LOCK:
         if conn in RELAY_CONNECTIONS:
             RELAY_CONNECTIONS.remove(conn)
+        if RELAY_GROUP_KEY and len(RELAY_CONNECTIONS) > 0:
+            try:
+                disconnect_msg = {
+                    "type": "info",
+                    "content": f"Peer desconectado."
+                }
+                json_str = json.dumps(disconnect_msg)
+                c_msg = encrypt_message_symmetric(json_str, RELAY_GROUP_KEY)
+                packet = (c_msg + "\n").encode()
+
+                for c in RELAY_CONNECTIONS:
+                    try:
+                        c.sendall(packet)
+                    except:
+                        pass
+            except Exception as e:
+                print(f"[Relay] Erro ao enviar notificação de saída: {e}")
+                conn.close()
+
     try:
         conn.close()
     except:
@@ -100,6 +121,7 @@ def start_relay_server(host, port):
 
 
 def main():
+    global RELAY_GROUP_KEY
     config_name = "configRelay"
     config_path = Path("config") / config_name
     user_path = config_path / "user"
@@ -121,15 +143,15 @@ def main():
     relay_client = Client(user_path, public_key, private_key)
     print("[Relay] A registar na CA...")
     try:
-        connect_and_register_to_ca(relay_client)
-        print("[Relay] Certificado obtido. Relay legítimo.")
+        info = connect_and_register_to_ca(relay_client)
+        RELAY_GROUP_KEY = info["group_key"]
+        print("[Relay] Certificado e Chave de Grupo obtidos.")
     except Exception as e:
         print(f"[Relay] Falha ao registar na CA: {e}")
         sys.exit(1)
 
     # 4. Iniciar Servidor
     start_relay_server(host, port)
-
 
 if __name__ == "__main__":
     main()

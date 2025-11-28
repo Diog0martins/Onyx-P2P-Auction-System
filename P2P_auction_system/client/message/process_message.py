@@ -4,8 +4,6 @@ from client.ledger.ledger_handler import load_public_ledger, ledger_request_hand
 
 from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
 
-
-
 def verify_double_spending2(token_id, config):
     ledger = load_public_ledger(config)
     for entry in ledger:
@@ -20,9 +18,7 @@ def verify_double_spending(token_id, client):
     return client.ledger.token_used(token_id)
 
 def update_personal_auctions(client, msg):
-
     if msg.get("type") == "auction":
-
         auction_id = msg.get("id")
         min_bid = msg.get("min_bid")
         add_auction(client.auctions, auction_id, min_bid, "False")
@@ -32,7 +28,6 @@ def update_personal_auctions(client, msg):
         new_bid = msg.get("bid")
 
         update_auction_higher_bid(client.auctions, auction_id, new_bid, "False")
-
 
 
 def process_message(msg, client_state):
@@ -74,16 +69,19 @@ def process_message(msg, client_state):
         elif mtype == "ledger_request":
             from network.tcp import send_to_peers
             update_json = ledger_request_handler(obj.get("request_id"), client_state)
-            
-            c_update_json = encrypt_message_symmetric(update_json, client_state.group_key)
 
-            
-            send_to_peers(c_update_json, client_state.peer.connections)
+            if update_json:
+                c_update_json = encrypt_message_symmetric(update_json, client_state.group_key)
+                send_to_peers(c_update_json, client_state.peer.connections)
         
         elif mtype == "ledger_update":
             if not client_state.ledger_request_id == 0:
                 print("Receive updated ledger!")
                 ledger_update_handler(client_state, obj)
+
+    elif mtype == "info":
+        content = obj.get("content")
+        print(f"\n[NETWORK INFO] {content}\n")
 
     else:
         print(f"[?] Unknown message type received: {mtype}")

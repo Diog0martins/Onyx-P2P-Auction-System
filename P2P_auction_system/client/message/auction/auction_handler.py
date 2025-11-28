@@ -1,7 +1,8 @@
 import json
 
-def cmd_auction(client, name, bid):
+from crypto.keys.keys_crypto import generate_key_pair
 
+def cmd_auction(client, name, bid):
     try:
         token_data = client.token_manager.get_token()
     except Exception as e:
@@ -9,6 +10,10 @@ def cmd_auction(client, name, bid):
         return None
 
     auction_id = generate_next_auction_id(client.auctions)
+    private_key_pem, public_key_pem = generate_key_pair()
+
+    private_key_str = private_key_pem.decode("utf-8")
+    public_key_str = public_key_pem.decode("utf-8")
 
     # Broadcast version
     auction_obj = {
@@ -16,10 +21,11 @@ def cmd_auction(client, name, bid):
         "type": "auction",
         "name": name,
         "min_bid": bid,
-        "token": token_data
+        "token": token_data,
+        "public_key": public_key_str
     }
 
-    add_my_auction(client.auctions, auction_id, "trash", "trash", bid)
+    add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid)
 
     print()
     print(f"Auction created with ID {auction_id}")

@@ -35,13 +35,23 @@ def handle_connection(conn, addr, client_state):
             print(f"[-] Ligação fechada abruptamente por {addr}")
             break
 
+        except OSError as e:
+            if client_state.peer.stop_event.is_set():
+                break
+            print(f"[-] Erro de socket (provável desconexão): {e}")
+            break
+
         except Exception as e:
             print(f"[!] ERRO CRÍTICO ao processar mensagem de {addr}: {e}")
             traceback.print_exc()
             break
 
-    print(f"[-] Disconnected: {addr}")
-    conn.close()
+    if not client_state.peer.stop_event.is_set():
+        print(f"[-] Disconnected: {addr}")
+    try:
+        conn.close()
+    except:
+        pass
 
 
 # Functions to accpet and establish connections with new peers
