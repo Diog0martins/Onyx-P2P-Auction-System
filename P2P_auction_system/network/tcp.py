@@ -123,7 +123,7 @@ def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
 
             print(f"[+] Conectado ao Relay com sucesso!")
             state.connections.append(conn)
-
+            conn.sendall((client_state.uuid).encode('utf-8'))
             handle_connection(conn, (relay_host, relay_port), client_state)
 
             print("[!] Conexão ao Relay perdida. A tentar reconectar...")

@@ -1,5 +1,6 @@
 class Client:
     def __init__(self, user_path, public_key, private_key):
+        self.uuid = None
         self.public_key = public_key
         self.private_key = private_key
         self.user_path = user_path
@@ -26,7 +27,10 @@ class Client:
                         1: { "highest_bid": 150, "my_bid": False },
                         2: { "highest_bid": 230, "my_bid": True },
                     }
-    }
-] 
+    },
+    "my_auctions": {
+    
+    },
+]
 
 """

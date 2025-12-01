@@ -17,5 +17,4 @@ def prepare_key_pair_generation(user_path):
     prv_path.write_bytes(private_pem)
     pub_path.write_bytes(public_pem)
 
-
     return load_private_and_public_key(prv_path, pub_path)

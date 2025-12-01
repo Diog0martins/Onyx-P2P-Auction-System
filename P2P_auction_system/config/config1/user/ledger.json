@@ -2,89 +2,51 @@
   {
     "height": 0,
     "prev_hash": "0",
-    "timestamp": "2025-11-27T17:33:54.390592Z",
+    "timestamp": "2025-12-01T19:46:42.384643Z",
     "events": [
       {
         "type": "genesis",
         "description": "Ledger initialized"
       }
     ],
-    "block_hash": "a378912e892e6db0525891333fea1e2fe58b96d98aef1a7689b75c8e7cc6caf1"
+    "block_hash": "0c83ff625f275a0eedd6b4d1e5c89d803cafeae8aa04e2da5b8f87352982e5f5"
   },
   {
     "height": 1,
-    "prev_hash": "a378912e892e6db0525891333fea1e2fe58b96d98aef1a7689b75c8e7cc6caf1",
-    "timestamp": "2025-11-27T17:42:24.662055Z",
+    "prev_hash": "0c83ff625f275a0eedd6b4d1e5c89d803cafeae8aa04e2da5b8f87352982e5f5",
+    "timestamp": "2025-12-01T20:58:18.674448Z",
     "events": [
       {
         "id": 1,
         "type": "auction",
-        "name": "joaomiguel",
-        "min_bid": 2000.0,
+        "name": "lirililarila",
+        "min_bid": 222.0,
         "token": {
-          "token_id": "2ed0c582045d8948d4a88703113546de",
-          "token_sig": "qmb/W9jWVVmrSHckrSVtUJhKVcA1Fb/wk1d/hnhLPFRCvbAFP/327jbhcY7+aspEJY0rkoKenZukvTGocPv96L0HqOakk2Aw/ABuW4V9sOvTgu9Ex6vRICwhCWuuJONpXKPyLB9bx2BUNpxSVrIByl508Mn9H184F8A2rVGSAT/1wB5qNcvwpHghSOS7y6FDy3HbVd/oiyDpJy6QKSfld7L3M8ASuqnPBvlsvE86ADsgJdz2Je8J1VxYzj5djjjTtPrHOqm8J1zTNYDC0H5FEvAZ2ufWedGU3UESbV9clpZ5aERpe6QA2Tk/ueSE2nQWWQU700c20HYFvf9xaB0/Og=="
+          "token_id": "fcf4cb79bc9272818db856087ea57f8a",
+          "token_sig": "N38JW06Yo5mvzMl/P5+m0fXbPV/DX/VvW7HaDjlJgGkFeQFn8IM+WD7it8C7L7qNwW4vl/ifZJnGyOAK3SNEqAQV2lVM1yjuc/Vdm+gHPvwz4cqHQg+GHnYMHehZ1sKn7+rJeFKpVe4OmApaSauOT/Vbjc+WbMl00LKo+FkJ1pydOS8l6fNYzFV8xLFXnERc3EF5gqRuIa4KQtJ7m5USIqCQu/tpvIdfWrYIa2049/R0QRDyxM+3qwzfe6/UBlRoc+nUu44p+r9rsNsU+xf6nr+zqPoW9Og2tSVoYZS7gIiuaUTqpx6GPJPhqjrdO0fczPOiNjewwucHRMxralIcKg=="
         }
       },
-      {
-        "id": 647824907,
-        "type": "bid",
-        "auction_id": 1,
-        "bid": 3000.0,
-        "token": {
-          "token_id": "4902da1830fc2d25c4a41940577f8c36",
-          "token_sig": "WFsRmPOVuxQTb216+eoGLefwYPhOZmF6aa2nDrTM3+dTRHIKBEozuFpXqFPRGjsIa4V8LgYeMZ4jv/2usc/oFrWmrXN/81FtMxiyGdCY73nZzOhTEKINVVgQH9Gi98qUHl8Aqig19GdOdy2qhB+FAUixAAGOQ1pwMAZJ6rbNKwAaSbFs+5vGXvy5ve3H+wrukM7qZyJAF7hsedWbArg63sVYTJPWMz8VbnWWDNxoCeGKlgrF/9A3Y+Gt1m+GoISITcNcK1yiLWmuF2aFhvovL8m0WcbR+MpjYOwYVlpVPS57e4v02CgponrE4MrDXr+gWLha+d1uurDXmI1SNRdE4g=="
-        }
-      },
-      {
-        "id": 500548696,
-        "type": "bid",
-        "auction_id": 1,
-        "bid": 4000.0,
-        "token": {
-          "token_id": "5f175977be9b23f53b982187d717e4de",
-          "token_sig": "GnNFvOQqiaCeJTICL69LaNGDjW/e1eZfPvUjqbaS5GkYiTUEqaG6g/LYq4b5DiThrcqkaPgVpQeiAO70+hV1ek0hk+8+GLMARjr1TJku4MXmP60RHmYptAeI9rURfrOmGrFSVI56auGcChZCKk95h8BsG3586Z/ifNeHusGo3hqq3bHCmq8rq085475W+MDy9jbjrJS0ekDghA1mineEt3aLdXDzEIhd7NePW4wzReCKCPmh2MS62iK1DRvyAW9XSXJOsDSvjv5PMNDWvbZemxgCrHTasgbOI9Sa7DLXeq5veWNNnyCKjmCQp/FEymfDhvZ9lTmMAdIoY9bQnoynJw=="
-        }
-      }
-    ],
-    "block_hash": "f44a20dd1b1d8c384ce4ae85b5e2a4dbb24c3c854fca30aa36837d2f8e91a6ec"
-  },
-  {
-    "height": 2,
-    "prev_hash": "f44a20dd1b1d8c384ce4ae85b5e2a4dbb24c3c854fca30aa36837d2f8e91a6ec",
-    "timestamp": "2025-11-27T17:44:43.930993Z",
-    "events": [
       {
         "id": 2,
         "type": "auction",
-        "name": "lirililarila",
-        "min_bid": 25.0,
+        "name": "tralalero",
+        "min_bid": 300.0,
         "token": {
-          "token_id": "4be26ce2c590bd8a240909a82336b836",
-          "token_sig": "LZhpAndSuVXk2J55seisq2hCy9HagCxKC7dobdEaQeNBWNIYHeOd5xstY7bGYDfC6d6e19eCKFdwISka7ndguon+taA63No02HGP7ys+Bh16P3N53780DKgRMW0asijQEAOjz7GGM8UofAsI8igKHvCaIBBS8iOMXKGkODcMya3UO/fKiPl9wNqXzUYai8sYDiXz+Kwu+dv/q/0JUZ/JUSYLSMpf2LZjshTLZvFJz+TQMtnWurMmkQyOsag+SkkzReDEpVbFxWc3QJduxK1GMfqr1vNGprEcMxwO66pNNtI2H6ygsoryTIhg9PinScl6+wgbA/quARLVnY2S/fiHug=="
+          "token_id": "520bf173aeefae1765e112c8a9cdb726",
+          "token_sig": "DnJ24LEH6xGYvZMKR2OcNOJ8pO4BfZt7WS8jAVHFvIxp/JkNEGRFZrHuKn4XCXveK9cuO0USGi+Zv859mHm1SLMS7ByZZcLL9c4NQTze41wBtcKr/DKFxBsFtK02OhfMvkBoxe1gsQ2kwPNEqyQwsNrSdWLH6P992h4/NsJ1SN5V6BPSQ3nGBlpt5gE6ikQxMKnI8aT++HErDj0zFaSPOqK32/seiDOVy6/GtJjllkT9QM8JmEYKPb+BzZr/NAvWGomfJiwAJgcIpdwImjjC0d329EVW8QL3D59kW/CSQzF1F53KVZQxSz0gyxfkhCu+FtsOm+ymk991/GJ7gxFsyA=="
         }
       },
       {
-        "id": 467736755,
+        "id": 513696143,
         "type": "bid",
         "auction_id": 2,
-        "bid": 40.0,
+        "bid": 300.0,
         "token": {
-          "token_id": "891127871ffc16046d6d3065119cc191",
-          "token_sig": "D6yj5fJEQXZ5bZpyVVZ8wC19Fr2jRxCWFaxA6gk/K/YA0YPUY7a56QThFDIunv5i+2Kb7y21HyfoHvgc6cAHhyVZtIQocHn9L62exV4tRDKlDmj+VU3zf5B+7BetHJdjUXzgF0WElBXjiImk6THS12c7dgMtPlrgMQz4q1f1XCV9DeJM1bkyT/kfWex9TIGkp+lIqW1M/5bX+CUlhm8EyqtIW/aig+WVHCVakrbh9hHd9diwhLE8Rc0xmt2hOuwDqEWmJQjVuzKrEzspLBYCw+NGNLIyVIh4AUJExZ9/d5lduP8112RJcv1YKImBWLcEWisG8tEOU7kxmAPFlevpdg=="
-        }
-      },
-      {
-        "id": 250813259,
-        "type": "bid",
-        "auction_id": 1,
-        "bid": 5000.0,
-        "token": {
-          "token_id": "44209a1aa82a72af5e0b4c92f90f502f",
-          "token_sig": "p/vtCD4PufvDi/mrK/07S9swBKaMFwx0HBV1dTBXZVBoexOoD2TFsXYJstyFdm8qn4ZwFKHL+0rrYCh6c72zjT+73W5khqo/90nI3ZMUvDEb9vE8McnyGQHpZhKw7EjQdqLDYem4jy9uw7YsVwefXBhGSmGfDfyIJmMPk5oP20ukcLJkriQK5yslj5i/Bh6CDs/lp4VgkoIy8O76hcZRM0vPO8IO7/O8QyRRZ4H+BcBSNK29vp53EtC4eoOwRr68wURjZxABjBnTgbyADJSB225mMrI02aa/oMYCqrggaZ6q9StRbphbxChr3kzpvqWWo5oR13obG9osqxy/uhgnCA=="
+          "token_id": "c4b9d1a34b2d5eee4e054c7ff26c74be",
+          "token_sig": "eSS7ZqixiBev0xs4vdhYhHdWECDAL+qvE/dwHpJ84y/2pJqDEIhPMM81Yi29mqQE1vG/Mav2iLCNYKSmurybmvBU+BMLrfzeChwNi3Nk9GJjZeTfyO27H0lopWpIn5frTwTnZvO7Pk0P5MaqZiDeEmV72UO2bq19zJ6WCV7d6VBCf1LaBxgizJbZ7WAVWZaCmUu0CkUqRee52X33o1HEQCXTS4X07eHGKv+eSxpyohUPLznLPy1NgqMwbAs6je2/S6KBjP4GxnSpBXNvY1kaa1b5sHNVg1nUd/smIC/8BHQSd+Dx81uG0pQ95zc9uvsFm9DFmO89I3ZzjJxznwrpvg=="
         }
       }
     ],
-    "block_hash": "0096c04ce69403628d9c1569626a92ad267b1c6a99c7f35ecf352e9d0d41ba3e"
+    "block_hash": "0d1393e439af5a2cbc7d48afea6144ce1b27ba76c5a2556377c089c1dde71f17"
   }
 ]

@@ -41,6 +41,7 @@ def start_client(args):
     # Send public key ao CA
     info = connect_and_register_to_ca(client)
 
+    client.uuid = info["uid"]
     client.cert_pem = info["cert_pem"]
     client.ca_pub_pem = info["ca_pub_pem"]
     client.group_key = info["group_key"]

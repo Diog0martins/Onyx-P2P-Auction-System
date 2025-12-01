@@ -1,15 +1,18 @@
-import json
 import uuid
-
+import json
 from fastapi import FastAPI, HTTPException, Request
 
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+
 from ca.ca_utils.time import now_iso
-from ca.ca_db import get_db, store_user, user_exists, insert_token, increment_token_quota
+from ca.ca_db import get_db, store_user, user_exists, insert_token, increment_token_quota, remove_user_and_get_remaining_pubkeys
 from ca.ca_api.Register import RegisterReq, RegisterResp
 from ca.ca_api.Tokens import TokensReq, TokensResp
 
 from crypto.encoding.b64 import b64e
 from crypto.certificates.certificates import make_x509_certificate, verify_csr
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
 
 from crypto.keys.keys_crypto import get_pub_bytes
 
@@ -19,10 +22,8 @@ from crypto.encoding.b64 import b64e, b64d
 from crypto.keys.keys_crypto import generate_aes_key
 
 
-
 # FastAPI Service Instance
 app = FastAPI(title="Auction CA", version="1.0.0")
-
 
 
 # Simple ‘health’ endpoint for monitoring check
@@ -75,7 +76,6 @@ def register(req: RegisterReq, request: Request):
     # 5 — group key
     if app.state.KEY_GROUP_BOOL is False:        
         group_key = generate_aes_key()
-        # print(group_key)
         app.state.KEY_GROUP_BOOL = True
         app.state.KEY_GROUP = group_key
         
@@ -146,20 +146,81 @@ def blind_sign(req: BlindSignReq, request: Request):
 
     return {"blind_signature_b64": b64e(sig_bytes)}
 
-# @app.post("/leave")
-# def leave_network(req: dict):
-#     uid = req["uid"]
+@app.get("/timestamp")
+def timestamp(request: Request):
+    
+    # 1. Get current time
+    ts = now_iso()
+    ts_bytes = ts.encode('utf-8')
 
-#     # 1. Remove from active peers
-#     if uid in app.state.ACTIVE_PEERS:
-#         app.state.ACTIVE_PEERS.remove(uid)
+    # 2. Get CA Private Key
+    ca_sk = request.app.state.CA_SK
 
-#     # 2. Generate new AES key
-#     new_key = generate_aes_key()
-#     app.state.GROUP_AES_KEY = new_key
+    # 3. Sign the timestamp (using Standard PSS padding and SHA256)
+    signature = ca_sk.sign(
+        ts_bytes,
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+    )
 
-#     # 3. Broadcast to everyone
-#     broadcast_new_group_key(new_key)
+    # 4. Return timestamp and signature
+    return {
+        "timestamp": ts,
+        "signature": b64e(signature)
+    }
 
-#     return {"status": "ok"}
+
+@app.post("/leave")
+def leave_network(req: dict, request: Request):
+
+    uid = req["uid"]
+    
+    # 1. Database operations
+    conn = get_db(request.app.state.DB_PATH)
+    
+    # This deletes the user and returns list of PEM strings for others
+    remaining_pub_pems = remove_user_and_get_remaining_pubkeys(conn, uid)
+    conn.close()
+
+    # 2. Generate new AES Group Key
+    new_group_key = generate_aes_key() # Usually returns a Base64 string
+
+    encrypted_key_list = []
+
+    # 3. Encrypt for each remaining user
+    for pem_str in remaining_pub_pems:
+        # Load the public key
+        pub_key = serialization.load_pem_public_key(
+            pem_str
+        )
+        # RSA Encrypt (OAEP + SHA256)
+        ciphertext = pub_key.encrypt(
+            new_group_key,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+        
+        encrypted_key_list.append(b64e(ciphertext))
+
+    old_key = app.state.KEY_GROUP
+
+    # 4. Update Server State
+    app.state.KEY_GROUP = new_group_key
+
+    answer = {
+        "type": "new_key",
+        "encrypted_keys": encrypted_key_list, 
+    }
+
+    to_send = json.dumps(answer)
+
+    return{
+        "new_keys": encrypt_message_symmetric(to_send, old_key)
+    } 
 

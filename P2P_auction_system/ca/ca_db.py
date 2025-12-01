@@ -47,6 +47,20 @@ def store_user(db_path, uid, req, csr_pem: bytes, cert_pem: bytes):
     conn.commit()
     conn.close()
 
+
+def remove_user_and_get_remaining_pubkeys(conn, uid: str):
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM users WHERE uid=?", (uid,))
+    
+    rows = cur.execute("SELECT user_pub_pem FROM users").fetchall()
+    
+    pub_keys = [row[0] for row in rows]
+    
+    conn.commit()
+    
+    return pub_keys
+
 # ====== ====== ======
 
 

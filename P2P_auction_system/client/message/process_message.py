@@ -4,7 +4,7 @@ from client.ledger.ledger_handler import load_public_ledger, ledger_request_hand
 
 from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
 
-
+from crypto.keys.group_keys import find_my_new_key
 
 def verify_double_spending2(token_id, config):
     ledger = load_public_ledger(config)
@@ -84,6 +84,14 @@ def process_message(msg, client_state):
             if not client_state.ledger_request_id == 0:
                 print("Receive updated ledger!")
                 ledger_update_handler(client_state, obj)
+    
+    elif mtype == "new_key":
+       keys = obj.get("encrypted_keys")
+       print(client_state.private_key)
+       new_group_key = find_my_new_key(keys, client_state.private_key)
+
+       if not new_group_key == None:
+           client_state.group_key = new_group_key
 
     else:
         print(f"[?] Unknown message type received: {mtype}")
