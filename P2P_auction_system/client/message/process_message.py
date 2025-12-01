@@ -1,8 +1,25 @@
 import json
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 from client.ledger.ledger_handler import load_public_ledger, ledger_request_handler, ledger_update_handler
 
 from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
+
+import time 
+
+def is_auction_closed(auctions, auction_id):
+    now = int(time.time())
+    
+    auction_data = auctions["auction_list"].get(auction_id)
+    
+    if not auction_data:
+        return True
+
+    closing_time = auction_data.get("closing_date")
+
+    if closing_time is None:
+        return False
+        
+    return now >= closing_time
 
 def verify_double_spending2(token_id, config):
     ledger = load_public_ledger(config)
@@ -21,7 +38,8 @@ def update_personal_auctions(client, msg):
     if msg.get("type") == "auction":
         auction_id = msg.get("id")
         min_bid = msg.get("min_bid")
-        add_auction(client.auctions, auction_id, min_bid, "False")
+        closing_date = msg.get("closing_date")
+        add_auction(client.auctions, auction_id, min_bid, closing_date, "False")
 
     else:
         auction_id = msg.get("auction_id")
@@ -37,6 +55,7 @@ def process_message(msg, client_state):
         print("[!] Received non-JSON message; ignored")
         print("RAW MESSAGE:", repr(msg))
         return
+
 
     mtype = obj.get("type")
     print(obj)
@@ -59,19 +78,26 @@ def process_message(msg, client_state):
             return
 
         if mtype in ("auction", "bid"):
-            if client_state.ledger.add_action(obj) == 1:
-                client_state.ledger.save_to_file(client_state.user_path / "ledger.json") 
 
+            should_process = True
+    
+            if mtype == "bid":
+                if is_auction_closed(client_state.auctions, obj.get('auction_id')):
+                    print(f"[X] Oferta rejeitada. Tempo expirado ({int(time.time())})")
+                    should_process = False
 
-            update_personal_auctions(client_state, obj)
-            print(f"[✓] Stored {mtype} (id={obj.get('id')}) in ledger")
+            if should_process:
+                if client_state.ledger.add_action(obj) == 1:
+                    client_state.ledger.save_to_file(client_state.user_path / "ledger.json") 
+                update_personal_auctions(client_state, obj)
+                print(f"[✓] Stored {mtype} (id={obj.get('id')}) in ledger")
 
         elif mtype == "ledger_request":
             from network.tcp import send_to_peers
             update_json = ledger_request_handler(obj.get("request_id"), client_state)
 
             if update_json:
-                c_update_json = encrypt_message_symmetric(update_json, client_state.group_key)
+                c_update_json = encrypt_message_symmetric_gcm(update_json, client_state.group_key)
                 send_to_peers(c_update_json, client_state.peer.connections)
         
         elif mtype == "ledger_update":

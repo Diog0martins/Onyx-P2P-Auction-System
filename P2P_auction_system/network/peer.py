@@ -4,7 +4,7 @@ from network.peer_state import PeerState
 from network.tcp import connect_to_relay
 from network.udp import peer_udp_handling
 from network.tcp import peer_tcp_handling, await_new_peers_conn
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 from network.tcp import peer_tcp_handling, await_new_peers_conn, send_to_peers
 
 from client.ledger.ledger_handler import prepare_ledger_request
@@ -20,7 +20,7 @@ def user_auction_input(connections, stop_event, client):
     request = prepare_ledger_request(client)
 
     if not request == None:
-        c_request = encrypt_message_symmetric(request, client.group_key)
+        c_request = encrypt_message_symmetric_gcm(request, client.group_key)
         send_to_peers(c_request, client.peer.connections)    
 
     menu_user()
@@ -37,7 +37,7 @@ def user_auction_input(connections, stop_event, client):
             stop_event.set()
             break
 
-        msg = encrypt_message_symmetric(msg, client.group_key)
+        msg = encrypt_message_symmetric_gcm(msg, client.group_key)
 
         if not connections:
             print("[!] Sem conexão ao Relay. Mensagem não enviada.")

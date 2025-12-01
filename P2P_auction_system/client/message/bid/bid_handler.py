@@ -1,6 +1,8 @@
 import json, random
 
 from client.message.auction.auction_handler import get_auction_higher_bid, check_auction_existence, update_auction_higher_bid
+from client.message.process_message import is_auction_closed
+import time 
 
 def cmd_bid(auction_id, bid, client):
 
@@ -46,7 +48,10 @@ def cmd_bid(auction_id, bid, client):
         "token": token_data
     }
 
-    update_auction_higher_bid(client.auctions, auction_id, bid, "True")    
+    if is_auction_closed(client.auctions, auction_id):
+        print(f"[X] Oferta rejeitada. Tempo expirado ({int(time.time())})")
+    else:
+        update_auction_higher_bid(client.auctions, auction_id, bid, "True")    
 
     print()
     print(f"Bid created with ID {bid_id}")

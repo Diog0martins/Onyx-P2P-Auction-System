@@ -9,7 +9,7 @@ from config.config import parse_config
 from client.client_state import Client
 from client.ca_handler.ca_connection import connect_and_register_to_ca
 from crypto.keys.keys_handler import prepare_key_pair_generation
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 
 # Lista global de conexões
 RELAY_CONNECTIONS = []
@@ -63,7 +63,7 @@ def handle_client(conn, addr):
                     "content": f"Peer desconectado."
                 }
                 json_str = json.dumps(disconnect_msg)
-                c_msg = encrypt_message_symmetric(json_str, RELAY_GROUP_KEY)
+                c_msg = encrypt_message_symmetric_gcm(json_str, RELAY_GROUP_KEY)
                 packet = (c_msg + "\n").encode()
 
                 for c in RELAY_CONNECTIONS:

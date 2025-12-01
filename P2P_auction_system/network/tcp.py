@@ -2,7 +2,7 @@ import threading, socket, queue, time
 import traceback
 from network.peer_state import PeerState
 from client.message.process_message import process_message
-from crypto.crypt_decrypt.decrypt import decrypt_message_symmetric
+from crypto.crypt_decrypt.decrypt import decrypt_message_symmetric_gcm
 
 
 # ======== TCP Utilities ========
@@ -28,7 +28,7 @@ def handle_connection(conn, addr, client_state):
             buffer += data.decode()
             while "\n" in buffer:
                 c_msg, buffer = buffer.split("\n", 1)
-                msg = decrypt_message_symmetric(c_msg, client_state.group_key)
+                msg = decrypt_message_symmetric_gcm(c_msg, client_state.group_key)
                 process_message(msg, client_state)
         
         except ConnectionResetError:

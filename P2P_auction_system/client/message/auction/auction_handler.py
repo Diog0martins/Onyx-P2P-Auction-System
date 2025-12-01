@@ -1,6 +1,10 @@
 import json
 
 from crypto.keys.keys_crypto import generate_key_pair
+from datetime import datetime, timedelta, timezone # Módulos de data/hora
+import time # Para timestamp Unix
+
+AUCTION_DURATION_SECONDS = 60 # 1 hora
 
 def cmd_auction(client, name, bid):
     try:
@@ -15,17 +19,21 @@ def cmd_auction(client, name, bid):
     private_key_str = private_key_pem.decode("utf-8")
     public_key_str = public_key_pem.decode("utf-8")
 
+    future_time = datetime.now(timezone.utc) + timedelta(seconds=AUCTION_DURATION_SECONDS)
+    closing_timestamp = int(future_time.timestamp())
+
     # Broadcast version
     auction_obj = {
         "id": auction_id,
         "type": "auction",
         "name": name,
+        "closing_date": closing_timestamp,
         "min_bid": bid,
         "token": token_data,
         "public_key": public_key_str
     }
 
-    add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid)
+    add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp)
 
     print()
     print(f"Auction created with ID {auction_id}")
@@ -42,7 +50,7 @@ def cmd_auction(client, name, bid):
 
 # ----- Utilities to have in run auction data -----
 
-def add_auction(auctions, auction_id, highest_bid, mine):
+def add_auction(auctions, auction_id, highest_bid, closing_timestamp, mine):
     if auction_id in auctions["auction_list"]:
         return False
 
@@ -51,7 +59,8 @@ def add_auction(auctions, auction_id, highest_bid, mine):
 
     auctions["auction_list"][auction_id] = {
         "highest_bid": highest_bid,
-        "my_bid": mine
+        "my_bid": mine,
+        "closing_date": closing_timestamp
     }
 
     return True
@@ -69,8 +78,8 @@ def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid):
     
     return True
 
-def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid):
-    added = add_auction(auctions, auction_id, starting_bid, "True")
+def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid, closing_timestamp):
+    added = add_auction(auctions, auction_id, starting_bid, closing_timestamp, "True")
     if not added:
         return False
 
