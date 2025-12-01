@@ -41,6 +41,7 @@ def _ensure_auction_entry(auctions, auction_id):
 def handle_auction_open(auctions, event):
     auction_id = event.get("id")
     min_bid = event.get("min_bid", 0.0)
+    auction_public_key = event.get("public_key", None)
 
     if auction_id is None:
         return
@@ -50,7 +51,11 @@ def handle_auction_open(auctions, event):
         return
 
     current = auctions["auction_list"][key].get("highest_bid", 0.0)
+
     auctions["auction_list"][key]["highest_bid"] = max(current, float(min_bid))
+
+    if auction_public_key:
+        auctions["auction_list"][key]["public_key"] = auction_public_key
 
     try:
         auctions["last_auction_id"] = max(int(auctions.get("last_auction_id", 0)), key)

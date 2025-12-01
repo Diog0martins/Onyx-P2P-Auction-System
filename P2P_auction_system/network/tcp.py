@@ -2,7 +2,7 @@ import threading, socket, queue, time
 import traceback
 from network.peer_state import PeerState
 from client.message.process_message import process_message
-from crypto.crypt_decrypt.decrypt import decrypt_message_symmetric
+from crypto.crypt_decrypt.decrypt import decrypt_message_symmetric_gcm
 
 
 # ======== TCP Utilities ========
@@ -28,11 +28,17 @@ def handle_connection(conn, addr, client_state):
             buffer += data.decode()
             while "\n" in buffer:
                 c_msg, buffer = buffer.split("\n", 1)
-                msg = decrypt_message_symmetric(c_msg, client_state.group_key)
+                msg = decrypt_message_symmetric_gcm(c_msg, client_state.group_key)
                 process_message(msg, client_state)
         
         except ConnectionResetError:
             print(f"[-] Ligação fechada abruptamente por {addr}")
+            break
+
+        except OSError as e:
+            if client_state.peer.stop_event.is_set():
+                break
+            print(f"[-] Erro de socket (provável desconexão): {e}")
             break
 
         except Exception as e:
@@ -40,8 +46,12 @@ def handle_connection(conn, addr, client_state):
             traceback.print_exc()
             break
 
-    print(f"[-] Disconnected: {addr}")
-    conn.close()
+    if not client_state.peer.stop_event.is_set():
+        print(f"[-] Disconnected: {addr}")
+    try:
+        conn.close()
+    except:
+        pass
 
 
 # Functions to accpet and establish connections with new peers

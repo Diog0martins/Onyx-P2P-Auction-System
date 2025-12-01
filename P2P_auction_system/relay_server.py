@@ -1,6 +1,7 @@
 import socket
 import threading
 import sys
+import json
 import time
 from pathlib import Path
 
@@ -9,11 +10,12 @@ from client.client_state import Client
 from client.ca_handler.ca_connection import connect_and_register_to_ca
 from client.ca_handler.ca_message import leave_network
 from crypto.keys.keys_handler import prepare_key_pair_generation
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 
 RELAY_CONNECTIONS = {} 
 RELAY_LOCK = threading.Lock()
 STOP_EVENT = threading.Event()
-
+RELAY_GROUP_KEY = None
 
 def peer_left(uuid):
     message = leave_network(uuid)
@@ -127,6 +129,7 @@ def start_relay_server(host, port):
 
 
 def main():
+    global RELAY_GROUP_KEY
     config_name = "configRelay"
     config_path = Path("config") / config_name
     user_path = config_path / "user"
@@ -145,14 +148,14 @@ def main():
     relay_client = Client(user_path, public_key, private_key)
     print("[Relay] A registar na CA...")
     try:
-        connect_and_register_to_ca(relay_client)
-        print("[Relay] Certificado obtido. Relay legítimo.")
+        info = connect_and_register_to_ca(relay_client)
+        RELAY_GROUP_KEY = info["group_key"]
+        print("[Relay] Certificado e Chave de Grupo obtidos.")
     except Exception as e:
         print(f"[Relay] Falha ao registar na CA: {e}")
         sys.exit(1)
 
     start_relay_server(host, port)
-
 
 if __name__ == "__main__":
     main()
