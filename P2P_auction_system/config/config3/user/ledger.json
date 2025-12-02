@@ -2,51 +2,13 @@
   {
     "height": 0,
     "prev_hash": "0",
-    "timestamp": "2025-12-01T19:46:46.614279Z",
+    "timestamp": "2025-12-02T00:06:55.341880Z",
     "events": [
       {
         "type": "genesis",
         "description": "Ledger initialized"
       }
     ],
-    "block_hash": "44c99d1a4045eecb2ca18f4a238ad906c586a7e2f4775f93e3bb30b0d7a8ba01"
-  },
-  {
-    "height": 1,
-    "prev_hash": "44c99d1a4045eecb2ca18f4a238ad906c586a7e2f4775f93e3bb30b0d7a8ba01",
-    "timestamp": "2025-12-01T20:58:18.674448Z",
-    "events": [
-      {
-        "id": 1,
-        "type": "auction",
-        "name": "lirililarila",
-        "min_bid": 222.0,
-        "token": {
-          "token_id": "fcf4cb79bc9272818db856087ea57f8a",
-          "token_sig": "N38JW06Yo5mvzMl/P5+m0fXbPV/DX/VvW7HaDjlJgGkFeQFn8IM+WD7it8C7L7qNwW4vl/ifZJnGyOAK3SNEqAQV2lVM1yjuc/Vdm+gHPvwz4cqHQg+GHnYMHehZ1sKn7+rJeFKpVe4OmApaSauOT/Vbjc+WbMl00LKo+FkJ1pydOS8l6fNYzFV8xLFXnERc3EF5gqRuIa4KQtJ7m5USIqCQu/tpvIdfWrYIa2049/R0QRDyxM+3qwzfe6/UBlRoc+nUu44p+r9rsNsU+xf6nr+zqPoW9Og2tSVoYZS7gIiuaUTqpx6GPJPhqjrdO0fczPOiNjewwucHRMxralIcKg=="
-        }
-      },
-      {
-        "id": 2,
-        "type": "auction",
-        "name": "tralalero",
-        "min_bid": 300.0,
-        "token": {
-          "token_id": "520bf173aeefae1765e112c8a9cdb726",
-          "token_sig": "DnJ24LEH6xGYvZMKR2OcNOJ8pO4BfZt7WS8jAVHFvIxp/JkNEGRFZrHuKn4XCXveK9cuO0USGi+Zv859mHm1SLMS7ByZZcLL9c4NQTze41wBtcKr/DKFxBsFtK02OhfMvkBoxe1gsQ2kwPNEqyQwsNrSdWLH6P992h4/NsJ1SN5V6BPSQ3nGBlpt5gE6ikQxMKnI8aT++HErDj0zFaSPOqK32/seiDOVy6/GtJjllkT9QM8JmEYKPb+BzZr/NAvWGomfJiwAJgcIpdwImjjC0d329EVW8QL3D59kW/CSQzF1F53KVZQxSz0gyxfkhCu+FtsOm+ymk991/GJ7gxFsyA=="
-        }
-      },
-      {
-        "id": 513696143,
-        "type": "bid",
-        "auction_id": 2,
-        "bid": 300.0,
-        "token": {
-          "token_id": "c4b9d1a34b2d5eee4e054c7ff26c74be",
-          "token_sig": "eSS7ZqixiBev0xs4vdhYhHdWECDAL+qvE/dwHpJ84y/2pJqDEIhPMM81Yi29mqQE1vG/Mav2iLCNYKSmurybmvBU+BMLrfzeChwNi3Nk9GJjZeTfyO27H0lopWpIn5frTwTnZvO7Pk0P5MaqZiDeEmV72UO2bq19zJ6WCV7d6VBCf1LaBxgizJbZ7WAVWZaCmUu0CkUqRee52X33o1HEQCXTS4X07eHGKv+eSxpyohUPLznLPy1NgqMwbAs6je2/S6KBjP4GxnSpBXNvY1kaa1b5sHNVg1nUd/smIC/8BHQSd+Dx81uG0pQ95zc9uvsFm9DFmO89I3ZzjJxznwrpvg=="
-        }
-      }
-    ],
-    "block_hash": "8590eab946c8e41d264e546c5d54e0a01a3356c6cc850d6fd8e1cd79dd5766f5"
+    "block_hash": "93e7db4258d516a60d4ecf794539bc05c0b952f0af851bbda88a212c52d7b262"
   }
 ]

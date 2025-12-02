@@ -12,7 +12,7 @@ from ca.ca_api.Tokens import TokensReq, TokensResp
 
 from crypto.encoding.b64 import b64e
 from crypto.certificates.certificates import make_x509_certificate, verify_csr
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 
 from crypto.keys.keys_crypto import get_pub_bytes
 
@@ -221,6 +221,6 @@ def leave_network(req: dict, request: Request):
     to_send = json.dumps(answer)
 
     return{
-        "new_keys": encrypt_message_symmetric(to_send, old_key)
+        "new_keys": encrypt_message_symmetric_gcm(to_send, old_key)
     } 
 

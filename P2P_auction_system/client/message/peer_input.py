@@ -14,7 +14,7 @@ def menu_user():
 def peer_input(client_state):
 
     try:
-        user_input = input("Cmd> ").strip()
+        user_input = input("").strip()
     except EOFError:
         return "exit"
 
