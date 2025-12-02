@@ -61,9 +61,9 @@ repomix-output.xml
 **/private_key.pem
 
 # CA database
-ca/ca.db
+P2P_auction_system/ca/ca.db
 
 # User ledgers
-config/**/user/ledger.json
-config/**/user/token_wallet.json
+P2P_auction_system/config/**/user/ledger.json
+P2P_auction_system/config/**/user/token_wallet.json
 
