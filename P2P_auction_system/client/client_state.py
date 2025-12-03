@@ -10,6 +10,7 @@ class Client:
         self.token_manager = None
         self.ledger_request_id = None
         self.ledger = None
+        self.is_running = None
         self.auctions = {
                             "last_auction_id": 0,
                             "auction_list": {},

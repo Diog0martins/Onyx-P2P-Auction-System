@@ -1,5 +1,6 @@
 import threading
 import sys
+import json, random
 from network.peer_state import PeerState
 from network.tcp import connect_to_relay
 from network.udp import peer_udp_handling
@@ -13,6 +14,70 @@ from client.message.peer_input import peer_input, menu_user
 from config.config import parse_config
 from local_test import TEST
 
+import threading
+import time
+from datetime import datetime
+from typing import TYPE_CHECKING
+from cryptography.hazmat.primitives import serialization
+
+def check_auctions(client_state):
+
+    while client_state.is_running:
+        
+        now = int(time.time())
+        
+        auctions_to_check = list(client_state.auctions["my_auctions"].keys())
+        
+        for auction_id in auctions_to_check:
+            
+            auction_data_list = client_state.auctions["auction_list"].get(auction_id)
+            
+            if not auction_data_list:
+                continue 
+
+            closing_timestamp = auction_data_list.get("closing_date")
+
+            if closing_timestamp and now >= closing_timestamp and auction_data_list.get("finished") == False:
+                
+                closing_dt = datetime.fromtimestamp(closing_timestamp)
+                print(f"\n--- 🔔 AVISO DE FECHE DE LEILAO ---")
+                print(f"LEILAO FINALIZADO: ID {auction_id}")
+                print(f"Hora de Feche Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
+                print(f"Hora Atual: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
+                print(f"-----------------------------------\n")
+
+                # 1. Obtenha o objeto chave (assumindo que ele está nos seus dados do leilão)
+                rsa_public_key_object = client_state.public_key
+
+                # 2. CONVERTER PARA STRING PEM
+                public_key_pem_str = rsa_public_key_object.public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                ).decode('utf-8') # Decodificar para string para ser JSON serializável
+
+                try:
+                    token_data = client_state.token_manager.get_token()
+                except Exception as e:
+                    print(f"[!] Não foi possível criar Auction: {e}")
+                    return None
+
+                # Creo msg de tipo auctionEnd
+                auctionEnd_obj = {
+                    "type": "auctionEnd",
+                    "auction_id": auction_id,
+                    "token": token_data,
+                    "pub_key": public_key_pem_str
+                }
+                # Encripto msg
+                auctionEnd_json = json.dumps(auctionEnd_obj)
+                msg = encrypt_message_symmetric_gcm(auctionEnd_json, client_state.group_key)
+                # Envio msg
+                send_to_peers(msg, client_state.peer.connections)
+                client_state.auctions["auction_list"][auction_id]["finished"] = True
+                
+        time.sleep(10)
+
+    print("[INFO] Hilo de monitorización de subastas finalizado.")
 
 def user_auction_input(connections, stop_event, client):
 
@@ -35,6 +100,7 @@ def user_auction_input(connections, stop_event, client):
         if isinstance(msg, str) and msg.lower() == "exit":
             print("[*] Exiting on user request.")
             stop_event.set()
+            client.is_running = False
             break
 
         msg = encrypt_message_symmetric_gcm(msg, client.group_key)
@@ -79,7 +145,15 @@ def run_peer(host, port, client):
         args=(state, relay_host, relay_port, client),
         daemon=True
     )
+
+    auctions_thread = threading.Thread(
+        target = check_auctions,
+        args = (client,),
+        daemon=True
+    )
+
     relay_thread.start()
+    auctions_thread.start()
 
     # 3. Iniciar o Menu do Utilizador (Loop Principal)
     peer_messaging(state, client)

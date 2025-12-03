@@ -4,7 +4,7 @@ from crypto.keys.keys_crypto import generate_key_pair
 from datetime import datetime, timedelta, timezone # Módulos de data/hora
 import time # Para timestamp Unix
 
-AUCTION_DURATION_SECONDS = 60 # 1 hora
+AUCTION_DURATION_SECONDS = 15
 
 def cmd_auction(client, name, bid):
     try:
@@ -60,7 +60,8 @@ def add_auction(auctions, auction_id, highest_bid, closing_timestamp, mine):
     auctions["auction_list"][auction_id] = {
         "highest_bid": highest_bid,
         "my_bid": mine,
-        "closing_date": closing_timestamp
+        "closing_date": closing_timestamp,
+        "finished": False
     }
 
     return True
@@ -85,7 +86,8 @@ def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid, 
 
     auctions["my_auctions"][auction_id] = {
         "public_key": public_key,
-        "private_key": private_key
+        "private_key": private_key,
+        "finished": False
     }
 
     return True

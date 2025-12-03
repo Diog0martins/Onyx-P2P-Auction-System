@@ -45,6 +45,7 @@ def start_client(args):
     client.cert_pem = info["cert_pem"]
     client.ca_pub_pem = info["ca_pub_pem"]
     client.group_key = info["group_key"]
+    client.is_running = True
 
 
     config_name = args[1] if len(args) == 2 else "config_lan"

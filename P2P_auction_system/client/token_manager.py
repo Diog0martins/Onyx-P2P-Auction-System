@@ -103,6 +103,26 @@ class TokenManager:
         with self.wallet_path.open("w") as f:
             json.dump(wallet, f, indent=4)
 
+    def _load_wallet(self) -> list:
+        wallet = []
+        if self.wallet_path.exists():
+            try:
+                with self.wallet_path.open("r") as f:
+                    wallet = json.load(f)
+            except Exception as e:
+                print(f"[!] Erro ao cargar a wallet: {e}")
+                pass
+        return wallet
+
+    def get_blinding_factor_r(self, token_id: str) -> Optional[int]:
+        wallet = self._load_wallet()
+        
+        for entry in wallet:
+            if entry.get("token_id") == token_id:
+                return int(entry.get("blinding_factor_r"))
+        
+        return None
+
 
     def get_token(self) -> Dict:
         print("[TokenManager] A gerar novo token para a transação...")

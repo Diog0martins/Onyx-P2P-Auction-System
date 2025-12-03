@@ -37,7 +37,12 @@ def print_auction_state(state):
                 highest = info.get("highest_bid", "N/A")
             else:
                 highest = "INVALID"
+            timestamp = info.get("closing_date", 0)
 
-            print(f"- Auction {auction_id}: highest bid = {highest}")
+            dt_object = datetime.fromtimestamp(timestamp) 
+
+            formatted_time = dt_object.strftime("%d-%m-%Y %H:%M:%S")
+
+            print(f"- Auction {auction_id}: highest bid = {highest}, Closing Date: {formatted_time}")
 
     print("")

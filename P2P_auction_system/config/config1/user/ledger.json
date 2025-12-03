@@ -2,13 +2,13 @@
   {
     "height": 0,
     "prev_hash": "0",
-    "timestamp": "2025-12-02T00:13:35.814543Z",
+    "timestamp": "2025-12-03T19:23:37.364304Z",
     "events": [
       {
         "type": "genesis",
         "description": "Ledger initialized"
       }
     ],
-    "block_hash": "56ba937c4ca5f74d34f69f2fe2917ad91fb715ac7cc5b5a7a5e746caba2b91ae"
+    "block_hash": "9fd9b4616aff13f83f341c48e9a99beccdd58a1efad134027d4bf50a670f5af5"
   }
 ]

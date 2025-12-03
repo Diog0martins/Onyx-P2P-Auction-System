@@ -33,7 +33,9 @@ def _ensure_auction_entry(auctions, auction_id):
     if key not in auctions["auction_list"] or not isinstance(auctions["auction_list"][key], dict):
         auctions["auction_list"][key] = {
             "highest_bid": 0.0,
-            "my_bid": False
+            "my_bid": False,
+            "bid_id": 0, 
+            "token": None
         }
     return key
 
@@ -62,10 +64,11 @@ def handle_auction_open(auctions, event):
     except (TypeError, ValueError):
         pass
 
-
 def handle_bid_event(auctions, event):
     auction_id = event.get("auction_id")
     bid = event.get("bid")
+    bid_id = int(event.get("id"))
+    token = event.get("token")
 
     if auction_id is None or bid is None:
         return
@@ -83,6 +86,8 @@ def handle_bid_event(auctions, event):
     if bid_val > current:
         auctions["auction_list"][key]["highest_bid"] = bid_val
         auctions["auction_list"][key]["my_bid"] = False
+        auctions["auction_list"][key]["bid_id"] = bid_id
+        auctions["auction_list"][key]["token"] = token
 
 
 def handle_auction_end(auctions, event):
