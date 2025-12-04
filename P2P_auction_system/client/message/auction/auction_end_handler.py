@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 import time
 from crypto.encoding.b64 import b64e
+from crypto.keys.keys_crypto import generate_aes_key
 
 def handle_auction_end(client_state, obj):
     from network.tcp import send_to_peers
@@ -51,34 +52,21 @@ def handle_auction_end(client_state, obj):
                 # id auction
                 # calculo el A
 
-                # Prepare public key to send to prove identity 
-                rsa_public_key_object = client_state.public_key
-                public_key_pem_str = rsa_public_key_object.public_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PublicFormat.SubjectPublicKeyInfo
-                ).decode('utf-8') 
+                deal_key = generate_aes_key()
 
-                # Dedicated Encryption to auctioner
-
-                print("==================================================================================")
-                auction_public_key_pem = client_state.ledger.find_auction_public_key(auction_target)
-                print(auction_public_key_pem)
-                
-                r_bytes = (str(r_value))
-                r_bytes_group_encrypted = encrypt_message_symmetric_gcm(r_bytes, client_state.group_key)
-                encrypted_blinding_r = encrypt_with_public_key(r_bytes_group_encrypted.encode(), auction_public_key_pem.encode("utf-8"))
-
-                public_key_pem_bytes = public_key_pem_str.encode()
-                encrypted_private_bytes = encrypt_with_public_key(public_key_pem_bytes, auction_public_key_pem.encode("utf-8"))
-
-
-                # 1. Construct private payload to Auction Creator
-                private_payload_dict = {
+                private_payload_obj = {
                     "token_winner_bid_id": token_id,
-                    "blinding_factor_r": encrypted_blinding_r,
-                    "public_key": encrypted_private_bytes
+                    "blinding_factor_r": r_value,
+                    # "public_key": encrypted_private_bytes
                 }
 
+                private_payload_json = json.dumps(private_payload_obj)
+                private_payload = encrypt_message_symmetric_gcm(private_payload_json, deal_key)
+
+                auction_public_key_pem = client_state.ledger.find_auction_public_key(auction_target)
+                print(auction_public_key_pem)
+                deal_key_encrypted_bytes = encrypt_with_public_key(deal_key, auction_public_key_pem.encode('utf-8'))
+                deal_key_encrypted_b64 = b64e(deal_key_encrypted_bytes)
 
                 try:
                     token_data = client_state.token_manager.get_token()
@@ -86,19 +74,70 @@ def handle_auction_end(client_state, obj):
                     print(f"[!] Não foi possível criar Auction: {e}")
                     return None
 
-                response_msg_payload = {
+                public_payload_obj = {
                     "type": "winner_reveal", 
                     "auction_id": auction_target,
                     "token": token_data,
-                    "private_info": private_payload_dict
+                    "deal_key": deal_key_encrypted_b64,
+                    "private_info": private_payload
                 }
 
-                # 4. ENCRIPTAR SIMETRICAMENTE (AES-GCM com Group Key)
-                response_json = json.dumps(response_msg_payload)
+                response_json = json.dumps(public_payload_obj)
                 c_response_json = encrypt_message_symmetric_gcm(response_json, client_state.group_key)
 
                 print(f"[WINNER] Enviando revelação do factor cegador 'r' para a subasta {auction_target}...")
-                send_to_peers(c_response_json, client_state.peer.connections)
+                # send_to_peers(c_response_json, client_state.peer.connections)
+
+                ###########################
+
+                # # Prepare public key to send to prove identity 
+                # rsa_public_key_object = client_state.public_key
+                # public_key_pem_str = rsa_public_key_object.public_bytes(
+                #     encoding=serialization.Encoding.PEM,
+                #     format=serialization.PublicFormat.SubjectPublicKeyInfo
+                # ).decode('utf-8') 
+
+                # # Dedicated Encryption to auctioner
+
+                # print("==================================================================================")
+                # auction_public_key_pem = client_state.ledger.find_auction_public_key(auction_target)
+                # print(auction_public_key_pem)
+                
+                # r_bytes = (str(r_value))
+                # r_bytes_group_encrypted = encrypt_message_symmetric_gcm(r_bytes, client_state.group_key)
+                # encrypted_blinding_r = encrypt_with_public_key(r_bytes_group_encrypted.encode(), auction_public_key_pem.encode("utf-8"))
+
+                # public_key_pem_bytes = public_key_pem_str.encode()
+                # encrypted_private_bytes = encrypt_with_public_key(public_key_pem_bytes, auction_public_key_pem.encode("utf-8"))
+
+
+                # # 1. Construct private payload to Auction Creator
+                # private_payload_dict = {
+                #     "token_winner_bid_id": token_id,
+                #     "blinding_factor_r": encrypted_blinding_r,
+                #     "public_key": encrypted_private_bytes
+                # }
+
+
+                # try:
+                #     token_data = client_state.token_manager.get_token()
+                # except Exception as e:
+                #     print(f"[!] Não foi possível criar Auction: {e}")
+                #     return None
+
+                # response_msg_payload = {
+                #     "type": "winner_reveal", 
+                #     "auction_id": auction_target,
+                #     "token": token_data,
+                #     "private_info": private_payload_dict
+                # }
+
+                # # 4. ENCRIPTAR SIMETRICAMENTE (AES-GCM com Group Key)
+                # response_json = json.dumps(response_msg_payload)
+                # c_response_json = encrypt_message_symmetric_gcm(response_json, client_state.group_key)
+
+                # print(f"[WINNER] Enviando revelação do factor cegador 'r' para a subasta {auction_target}...")
+                # send_to_peers(c_response_json, client_state.peer.connections)
                 
                 # Opcional: Eliminar la subasta de la lista local
                 # del client_state.auctions["auction_list"][auction_target]
