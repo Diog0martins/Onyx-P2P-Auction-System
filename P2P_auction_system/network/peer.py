@@ -17,7 +17,6 @@ from local_test import TEST
 import threading
 import time
 from datetime import datetime
-from typing import TYPE_CHECKING
 from cryptography.hazmat.primitives import serialization
 
 def check_auctions(client_state):
@@ -47,13 +46,13 @@ def check_auctions(client_state):
                 print(f"-----------------------------------\n")
 
                 # 1. Obtenha o objeto chave (assumindo que ele está nos seus dados do leilão)
-                rsa_public_key_object = client_state.public_key
+                # rsa_public_key_object = client_state.public_key
 
                 # 2. CONVERTER PARA STRING PEM
-                public_key_pem_str = rsa_public_key_object.public_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PublicFormat.SubjectPublicKeyInfo
-                ).decode('utf-8') # Decodificar para string para ser JSON serializável
+                # public_key_pem_str = rsa_public_key_object.public_bytes(
+                #     encoding=serialization.Encoding.PEM,
+                #     format=serialization.PublicFormat.SubjectPublicKeyInfo
+                # ).decode('utf-8') # Decodificar para string para ser JSON serializável
 
                 try:
                     token_data = client_state.token_manager.get_token()
@@ -66,7 +65,6 @@ def check_auctions(client_state):
                     "type": "auctionEnd",
                     "auction_id": auction_id,
                     "token": token_data,
-                    "pub_key": public_key_pem_str
                 }
                 # Encripto msg
                 auctionEnd_json = json.dumps(auctionEnd_obj)

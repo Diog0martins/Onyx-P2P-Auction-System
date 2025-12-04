@@ -127,7 +127,7 @@ def ledger_to_auction_dict(ledger):
                 handle_auction_open(auctions, event)
             elif event_type == "bid":
                 handle_bid_event(auctions, event)
-            elif event_type == "auction_end":
+            elif event_type == "auctionEnd":
                 handle_auction_end(auctions, event)
 
     try:

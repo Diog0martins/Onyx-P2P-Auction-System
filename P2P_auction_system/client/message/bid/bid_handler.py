@@ -51,7 +51,7 @@ def cmd_bid(auction_id, bid, client):
     if is_auction_closed(client.auctions, auction_id):
         print(f"[X] Oferta rejeitada. Tempo expirado ({int(time.time())})")
     else:
-        update_auction_higher_bid(client.auctions, auction_id, bid, "True")    
+        update_auction_higher_bid(client.auctions, auction_id, bid, "True", token_data)    
 
     print()
     print(f"Bid created with ID {bid_id}")

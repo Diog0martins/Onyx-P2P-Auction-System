@@ -2,13 +2,51 @@
   {
     "height": 0,
     "prev_hash": "0",
-    "timestamp": "2025-12-03T19:23:37.364304Z",
+    "timestamp": "2025-12-04T11:41:20.456581Z",
     "events": [
       {
         "type": "genesis",
         "description": "Ledger initialized"
       }
     ],
-    "block_hash": "9fd9b4616aff13f83f341c48e9a99beccdd58a1efad134027d4bf50a670f5af5"
+    "block_hash": "27bca0d11c1333a40e1f10bf31450748301fcff2165d434a9fd1461590948298"
+  },
+  {
+    "height": 1,
+    "prev_hash": "27bca0d11c1333a40e1f10bf31450748301fcff2165d434a9fd1461590948298",
+    "timestamp": "2025-12-04T11:41:25.049150Z",
+    "events": [
+      {
+        "id": 1,
+        "type": "auction",
+        "name": "b",
+        "closing_date": 1764848495,
+        "min_bid": 3.0,
+        "token": {
+          "token_id": "af86145ccc3156195b1e1aa230b23693",
+          "token_sig": "KKixX2bA6duauSYwBeUAgfGeG3wUORXaSKUR5omGjmTMASUemzh92TC7fYAcC1YUv8YbC/ghze3A5TNlSxjYNDdYAzhCQl+oWY6sy6qliJYgHclC44BtoCfC2qZ+2vd6ji872kElBv2LemBKVp+Z/nlhnDVo9NlSP034B6FfcCjKg9PVhUtr489r+c/6JxBckWK65n04M1e+Icbz9K7D9cBs/GoAO/lRhNyato1sbDtgJv62Zfkyd6+F0FrA4PKbHsi2oovvFrJCjE8eBLNCPrnQrZxTU92m6LsLtoKyl6jj5CPvbcuor12ev9+jUDhvilOga/nq9z8W6OCofgciCg=="
+        },
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkOd4bK5Xk9lFom2Fqspc\n4f4bzShdnBgVHtrDtxe1SjkhHAYdKYq5lVdo6iRZOKQCKZqbdKdmB1shst7gVbXi\nlKNnZU2eV8/D8silKe9VnBgecLXYtBA1LBqeTA7/xlqZNurd7CTltFCooxAUdILd\nPOQMpdM2XZiXTFr0sxCMEfDUh/Lpaiuo77uAE4MoGQKktJ6BPOFW4IZrs5l9Wl5J\nC+YW5kJ/Avg1yu1FA/Ztp8zhxnbaXmaVSPNFQeY1BTW/mTkd9pvc/GauDjkynnLi\npr+7CQPq0lZO7NfBtkS72COaXSi3swr9dEK2ncC0jAWFfNsrwPPTVaUbwicucDPC\nIwIDAQAB\n-----END PUBLIC KEY-----\n"
+      }
+    ],
+    "block_hash": "4fb6c896bb45b4bcf86aa11b62726ec58da01e51654a82e48065cac35ea06572"
+  },
+  {
+    "height": 2,
+    "prev_hash": "4fb6c896bb45b4bcf86aa11b62726ec58da01e51654a82e48065cac35ea06572",
+    "timestamp": "2025-12-04T11:41:29.277995Z",
+    "events": [
+      {
+        "id": 97817405,
+        "type": "bid",
+        "auction_id": 1,
+        "bid": 4.0,
+        "token": {
+          "token_id": "c64842dd66675c38b3d849de407b56ce",
+          "token_sig": "LJNspvsU565ldcqu4HI0B9vMOKhsaCK6l/3ahC4F48VOr8g3vjuHWt7dKkQOcRu8Umvaa4uQAMjfLAlgVSZSU+uyAMVwIBMBHcqAZgmiu7Sv9Jmhxc70G94e4C4CQrLBgsjvZlE2DGA0DxXu8LrnO7yHr3RygQGwH00BqAE1iBQzqQf3ROxs+x4eZcCfPHE1TUBdDefHubpKRfkPxDLmf3FpcN6jFeMmD/ERLa3bY1j+zW5js19GmJFxzDuJH/Mq6Z45+QzCt4B4TyYWJshpb2JRX1s6ZoLRFTX59W3nGFvXrejKfXQYxGCnzeaiRfG9WFBawriAtQxqPKHi18gKCg=="
+        }
+      }
+    ],
+    "block_hash": "08271c35a46f40951059c4ef8838420ab914613e39569ba2d3864f8740fb2e3f"
   }
 ]
