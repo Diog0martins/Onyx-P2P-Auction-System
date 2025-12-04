@@ -4,6 +4,7 @@ from client.ledger.ledger_handler import load_public_ledger, ledger_request_hand
 from crypto.keys.group_keys import find_my_new_key
 from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
 from client.message.auction.auction_end_handler import handle_auction_end
+from client.message.winner_reveal.winner_reveal_handler import handle_winner_reveal
 import time
 
 def is_auction_closed(auctions, auction_id):
@@ -40,8 +41,9 @@ def update_personal_auctions(client, msg):
         auction_id = msg.get("id")
         min_bid = msg.get("min_bid")
         closing_date = msg.get("closing_date")
+        public_key = msg.get("public_key")
         
-        add_auction(client.auctions, auction_id, min_bid, closing_date, "False", token_data)
+        add_auction(client.auctions, auction_id, min_bid, closing_date, "False", token_data, public_key)
 
     else:
         auction_id = msg.get("auction_id")
@@ -61,7 +63,7 @@ def process_message(msg, client_state):
 
     mtype = obj.get("type")
     print(obj)
-    if mtype in ("auction", "bid", "ledger_request", "ledger_update", "auctionEnd"):
+    if mtype in ("auction", "bid", "ledger_request", "ledger_update", "auctionEnd", "winner_reveal"):
         
         token_data = obj.get("token")
         if not token_data:
@@ -96,6 +98,9 @@ def process_message(msg, client_state):
 
         elif mtype == "auctionEnd":
             handle_auction_end(client_state, obj)
+
+        elif mtype == "winner_reveal":
+            handle_winner_reveal(client_state, obj)
 
         elif mtype == "ledger_request":
             from network.tcp import send_to_peers

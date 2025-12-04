@@ -33,7 +33,7 @@ def cmd_auction(client, name, bid):
         "public_key": public_key_str
     }
 
-    add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp, token_data)
+    add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp, token_data, public_key_str)
 
     print()
     print(f"Auction created with ID {auction_id}")
@@ -50,7 +50,7 @@ def cmd_auction(client, name, bid):
 
 # ----- Utilities to have in run auction data -----
 
-def add_auction(auctions, auction_id, highest_bid, closing_timestamp, mine, used_token):
+def add_auction(auctions, auction_id, highest_bid, closing_timestamp, mine, used_token, public_key):
     if auction_id in auctions["auction_list"]:
         return False
 
@@ -62,7 +62,8 @@ def add_auction(auctions, auction_id, highest_bid, closing_timestamp, mine, used
         "my_bid": mine,
         "closing_date": closing_timestamp,
         "auction_token_data": used_token,
-        "finished": False
+        "finished": False,
+        "public_key": public_key
     }
 
     return True
@@ -81,8 +82,8 @@ def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid, used_tok
     
     return True
 
-def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid, closing_timestamp, used_token):
-    added = add_auction(auctions, auction_id, starting_bid, closing_timestamp, "True", used_token)
+def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid, closing_timestamp, used_token, public_key_str):
+    added = add_auction(auctions, auction_id, starting_bid, closing_timestamp, "True", used_token, public_key_str)
     if not added:
         return False
 
