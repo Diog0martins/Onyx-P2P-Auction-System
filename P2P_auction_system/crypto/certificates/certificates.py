@@ -118,3 +118,37 @@ def verify_certificate(cert_pem_b64: str, ca_pub: rsa.RSAPublicKey) -> bool:
         return True
     except InvalidSignature:
         return False
+
+
+def inspect_certificate(cert_raw):
+    # 1. Handle input types: convert PEM bytes to an Object if needed
+    if isinstance(cert_raw, bytes):
+        cert = x509.load_pem_x509_certificate(cert_raw)
+    else:
+        cert = cert_raw
+
+    print(f"{'='*10} CERTIFICATE DETAILS {'='*10}")
+
+    # 2. Extract Common Name (CN) specifically for readability
+    try:
+        subject_cn = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+    except IndexError:
+        subject_cn = "No Common Name"
+
+    print(f"Subject CN:   {subject_cn}")
+    
+    # 3. Print Full Subject and Issuer strings
+    print(f"Full Subject: {cert.subject.rfc4514_string()}")
+    print(f"Issuer:       {cert.issuer.rfc4514_string()}")
+    
+    # 5. Serial Number (in Hex for readability)
+    print(f"Serial No:    {hex(cert.serial_number)}")
+
+    # 6. Subject Alternative Names (SANs) - Crucial for web servers
+    try:
+        san_ext = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+        print(f"SANs:         {san_ext.value}")
+    except x509.ExtensionNotFound:
+        print("SANs:         None")
+
+    print("="*40)

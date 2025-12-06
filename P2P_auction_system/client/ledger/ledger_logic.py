@@ -61,9 +61,6 @@ class Ledger:
     
     def add_action(self, action):
         self.current_actions.append(action)
-        print(self.max_actions)
-        print(self.chain)
-        print(self.current_actions)
         if len(self.current_actions) == self.max_actions:
             self.finish_block()
             return 1
@@ -124,6 +121,21 @@ class Ledger:
                 if action.get("type") == "auction":
                     if action.get("id") == auction_id:
                         return action.get("public_key")
+
+        return None
+    
+    def find_token_signature(self, token_id):
+        for block in self.chain:
+            for action in block.get("events", []):
+                
+                # Support both names: token or token_data
+                token_info = action.get("token")
+                
+                if not token_info:
+                    continue
+
+                if token_info.get("token_id") == token_id:
+                    return token_info.get("token_sig")
 
         return None
 

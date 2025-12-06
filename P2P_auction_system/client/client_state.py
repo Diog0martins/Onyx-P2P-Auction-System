@@ -15,6 +15,7 @@ class Client:
                             "last_auction_id": 0,
                             "auction_list": {},
                             "my_auctions": {},
+                            "winning_auction":{},
                         }
                         
         

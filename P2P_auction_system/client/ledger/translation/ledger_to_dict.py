@@ -113,6 +113,7 @@ def ledger_to_auction_dict(ledger):
         "last_auction_id": 0,
         "auction_list": {},
         "my_auctions": {},
+        "winning_auction": {},
     }
 
     for block in getattr(ledger, "chain", []) or []:

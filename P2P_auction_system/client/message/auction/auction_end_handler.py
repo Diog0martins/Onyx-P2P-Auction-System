@@ -5,6 +5,7 @@ import json
 import time
 from crypto.encoding.b64 import b64e
 from crypto.keys.keys_crypto import generate_aes_key
+from client.message.auction.auction_handler import add_winning_key
 
 def handle_auction_end(client_state, obj):
     from network.tcp import send_to_peers
@@ -53,11 +54,11 @@ def handle_auction_end(client_state, obj):
                 # calculo el A
 
                 deal_key = generate_aes_key()
+                add_winning_key(client_state.auctions, auction_target, deal_key)
 
                 private_payload_obj = {
                     "token_winner_bid_id": token_id,
                     "blinding_factor_r": r_value,
-                    # "public_key": encrypted_private_bytes
                 }
 
                 private_payload_json = json.dumps(private_payload_obj)
@@ -74,7 +75,7 @@ def handle_auction_end(client_state, obj):
                     return None
 
                 public_payload_obj = {
-                    "type": "winner_reveal", 
+                    "type": "winner_token_reveal", 
                     "auction_id": auction_target,
                     "token": token_data,
                     "deal_key": deal_key_encrypted_b64,
@@ -96,7 +97,5 @@ def handle_auction_end(client_state, obj):
         else:
             print("[ERROR] Leilao finalizado sem token de ganhador nos dados.")
             # Puedes manejar el caso donde no hay token si es un escenario válido
-        
-        
     else:
         return

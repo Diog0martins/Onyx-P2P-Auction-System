@@ -5,7 +5,7 @@ from config.config import parse_config
 from crypto.keys.keys_handler import prepare_key_pair_generation
 from client.client_state import Client 
 from client.ca_handler.ca_connection import connect_and_register_to_ca
-from client.token_manager import TokenManager
+from crypto.token.token_manager import TokenManager
 from client.ledger.ledger_handler import init_cli_ledger
 from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
 
@@ -63,6 +63,7 @@ def start_client(args):
 
 
     print(f"[Client] Token Manager inicializado para {config_name}")
+
 
     # Host Discovery and Connection Establishment
     run_peer(host, port, client)

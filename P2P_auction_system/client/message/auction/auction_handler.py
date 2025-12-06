@@ -4,7 +4,7 @@ from crypto.keys.keys_crypto import generate_key_pair
 from datetime import datetime, timedelta, timezone # Módulos de data/hora
 import time # Para timestamp Unix
 
-AUCTION_DURATION_SECONDS = 10
+AUCTION_DURATION_SECONDS = 5
 
 def cmd_auction(client, name, bid):
     try:
@@ -105,3 +105,12 @@ def generate_next_auction_id(auctions):
 def check_auction_existence(auctions, auction_id):
     print(auctions)
     return auction_id in auctions.get("auction_list", {})
+
+def add_winning_key(auctions_data, auction_id, crypto_key):
+    auctions_data["winning_auction"][auction_id] = crypto_key
+
+def remove_winning_key(auctions_data, auction_id):
+    auctions_data["winning_auction"].pop(auction_id, None)
+
+def get_winning_key(auctions_data, auction_id):
+    return auctions_data["winning_auction"].get(auction_id)
