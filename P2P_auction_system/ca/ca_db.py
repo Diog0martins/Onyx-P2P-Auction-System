@@ -67,13 +67,13 @@ def remove_user_and_get_remaining_pubkeys(conn, uid: str):
 
 # ====== Database Setup ======
 
-# Cria uma conexão a ca.db
+# Creates a connection to ca.db
 def get_db(db_path):
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
-# Cria as tabelas se não existirem
+# Create the tables if they do not exist
 def init_db(db_path):
     conn = get_db(db_path)
     cur = conn.cursor()

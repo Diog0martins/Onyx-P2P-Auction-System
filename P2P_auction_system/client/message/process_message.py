@@ -26,11 +26,11 @@ def is_auction_closed(auctions, auction_id):
 def verify_double_spending2(token_id, config):
     ledger = load_public_ledger(config)
     for entry in ledger:
-        # Verifica se a entrada tem token e se o ID é igual
+        # Checks whether the entry has a token and whether the ID is the same
         if "token" in entry:
             existing_id = entry["token"].get("token_id")
             if existing_id == token_id:
-                return True # Já foi gasto!
+                return True # It's already been spent!
     return False
 
 def verify_double_spending(token_id, client):
@@ -74,25 +74,23 @@ def process_message(msg, client_state):
 
     mtype = obj.get("type")
     
-    # Uncomment to print messages!
-    #print(obj)
     
     if mtype in message_types:
         
         token_data = obj.get("token")
         if not token_data:
-            print(f"[!] Mensagem {mtype} rejeitada: Sem token.")
+            print(f"[!] Message {mtype} rejected: No token.")
             return
 
         token_id = token_data.get("token_id")
         token_sig = token_data.get("token_sig")
 
         if not client_state.token_manager.verify_token(token_id, token_sig):
-            print(f"[Security] ALERTA: Assinatura do Token inválida na mensagem {obj.get('id')}. Ignorada.")
+            print(f"[Security] WARNING: Invalid token signature in message {obj.get('id')}. Ignored.")
             return
 
         if verify_double_spending(token_id, client_state):
-            print(f"[Security] ALERTA: Tentativa de Double Spending (Token {token_id}). Ignorada.")
+            print(f"[Security] ALERT: Attempted double spending (Token {token_id}). Ignored.")
             return
         
         # == Auction Logic Messages
@@ -102,7 +100,7 @@ def process_message(msg, client_state):
     
             if mtype == "bid":
                 if is_auction_closed(client_state.auctions, obj.get('auction_id')):
-                    print(f"[X] Oferta rejeitada. Tempo expirado ({int(time.time())})")
+                    print(f"[X] Offer rejected. Time expired. ({int(time.time())})")
                     should_process = False
 
             if should_process:

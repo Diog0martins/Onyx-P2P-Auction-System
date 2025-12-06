@@ -10,7 +10,7 @@ def cmd_auction(client, name, bid):
     try:
         token_data = client.token_manager.get_token()
     except Exception as e:
-        print(f"[!] Não foi possível criar Auction: {e}")
+        print(f"[!] Unable to create Auction: {e}")
         return None
 
     auction_id = generate_next_auction_id(client.auctions)
@@ -35,15 +35,15 @@ def cmd_auction(client, name, bid):
 
     add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp, token_data, public_key_str)
 
-    print()
+    # print()
     print(f"Auction created with ID {auction_id}")
 
     # JSON ready to send
     auction_json = json.dumps(auction_obj)
 
-    print("JSON ready to broadcast:")
-    print(auction_json)
-    print()
+    # print("JSON ready to broadcast:")
+    # print(auction_json)
+    # print()
 
     return auction_json
 
@@ -103,7 +103,7 @@ def generate_next_auction_id(auctions):
 
 
 def check_auction_existence(auctions, auction_id):
-    print(auctions)
+    # print(auctions)
     return auction_id in auctions.get("auction_list", {})
 
 def add_winning_key(auctions_data, auction_id, crypto_key):

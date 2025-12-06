@@ -124,17 +124,17 @@ def issue_tokens(req: TokensReq, request: Request):
 @app.post("/blind_sign")
 def blind_sign(req: BlindSignReq, request: Request):
 
-    # 1. Verificar que o UID exista
+    # 1. Verify that the UID exists
     conn = get_db(request.app.state.DB_PATH)
     if not user_exists(conn, req.uid):
         conn.close()
         raise HTTPException(status_code=404, detail="Unknown uid")
     conn.close()
 
-    # 2. Obter a chave privada do CA
+    # 2. Obtain the CA private key
     ca_sk = request.app.state.CA_SK
 
-    # 3. Decodificar o blinded token
+    # 3. Decoding the blinded token
     blinded_int = int.from_bytes(b64d(req.blinded_token_b64), "big")
 
     # 4. RSA blind signing: signature = blinded^d mod n
@@ -144,7 +144,7 @@ def blind_sign(req: BlindSignReq, request: Request):
 
     signature_int = pow(blinded_int, d, n)
 
-    # 5. Convertir a bytes para enviar
+    # 5. Convert to bytes for sending
     sig_bytes = signature_int.to_bytes((n.bit_length() + 7) // 8, "big")
 
     return {"blind_signature_b64": b64e(sig_bytes)}

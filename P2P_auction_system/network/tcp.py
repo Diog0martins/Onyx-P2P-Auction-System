@@ -8,7 +8,7 @@ from crypto.crypt_decrypt.decrypt import decrypt_message_symmetric_gcm
 # ======== TCP Utilities ========
 
 def send_to_peers(msg, connections):
-    # Enviar a todos los peers
+    # Send to all peers
     for conn in connections[:]:
         try:
             conn.sendall((msg +"\n").encode())
@@ -32,17 +32,17 @@ def handle_connection(conn, addr, client_state):
                 process_message(msg, client_state)
         
         except ConnectionResetError:
-            print(f"[-] Ligação fechada abruptamente por {addr}")
+            print(f"[-] Call abruptly ended by {addr}")
             break
 
         except OSError as e:
             if client_state.peer.stop_event.is_set():
                 break
-            print(f"[-] Erro de socket (provável desconexão): {e}")
+            print(f"[-] Socket error (probable disconnection): {e}")
             break
 
         except Exception as e:
-            print(f"[!] ERRO CRÍTICO ao processar mensagem de {addr}: {e}")
+            print(f"[!] CRITICAL ERROR while processing message from {addr}: {e}")
             traceback.print_exc()
             break
 
@@ -121,7 +121,7 @@ def peer_tcp_handling(client_state):
 # ======== ======== ========
 
 def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
-    print(f"[*] A conectar ao RELAY em {relay_host}:{relay_port}...")
+    print(f"[*] Connecting to RELAY at {relay_host}:{relay_port}...")
     while not state.stop_event.is_set():
         try:
             if len(state.connections) > 0:
@@ -131,18 +131,18 @@ def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             conn.connect((relay_host, relay_port))
 
-            print(f"[+] Conectado ao Relay com sucesso!")
+            print(f"[+] Successfully connected to Relay!")
             state.connections.append(conn)
             conn.sendall((client_state.uuid).encode('utf-8'))
             handle_connection(conn, (relay_host, relay_port), client_state)
 
-            print("[!] Conexão ao Relay perdida. A tentar reconectar...")
+            print("[!] Connection to Relay lost. Attempting to reconnect...")
             if conn in state.connections:
                 state.connections.remove(conn)
 
         except ConnectionRefusedError:
-            print("[!] Relay indisponível. A tentar novamente em 3s...")
+            print("[!] Relay unavailable. Retrying in 3 seconds....")
             state.stop_event.wait(3)
         except Exception as e:
-            print(f"[!] Erro na ligação ao Relay: {e}")
+            print(f"[!] Error connecting to Relay: {e}")
             state.stop_event.wait(3)

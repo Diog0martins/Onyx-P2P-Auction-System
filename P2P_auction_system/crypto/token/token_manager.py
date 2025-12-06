@@ -158,7 +158,7 @@ class TokenManager:
                 with self.wallet_path.open("r") as f:
                     wallet = json.load(f)
             except Exception as e:
-                print(f"[!] Erro ao cargar a wallet: {e}")
+                print(f"[!] Error loading wallet: {e}")
                 pass
         return wallet
 
@@ -172,7 +172,7 @@ class TokenManager:
         return None
 
     def get_token(self) -> Dict:
-        print("[TokenManager] A gerar novo token para a transação...")
+        print("[TokenManager] Generating a new token for the transaction...")
 
         # 1. Request Quota
         try:
@@ -180,7 +180,7 @@ class TokenManager:
             r_quota = requests.post(f"{CA_URL}/tokens", json=payload_quota, timeout=5)
             r_quota.raise_for_status()
         except Exception as e:
-            print(f"[!] Erro ao contactar CA (/tokens): {e}")
+            print(f"[!] Error contacting CA (/tokens): {e}")
             raise e
 
         # 2. Generate and Blind
@@ -205,10 +205,10 @@ class TokenManager:
                 raise Exception("CA devolveu uma assinatura inválida!")
 
             self._save_to_wallet(token_id, blinded_b64, r, token_sig_b64)
-            print(f"[TokenManager] Token guardado na carteira.")
+            print(f"[TokenManager] Token stored in wallet.")
 
             return {"token_id": token_id, "token_sig": token_sig_b64}
 
         except Exception as e:
-            print(f"[!] Falha no processo de Blind Sign: {e}")
+            print(f"[!] Failure in the Blind Sign process: {e}")
             raise e

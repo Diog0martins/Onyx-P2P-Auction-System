@@ -62,7 +62,7 @@ def connect_and_register_to_ca(client):
     }
 
 def request_winner_reveal(client, token_id, encrypted_identity_blob):
-    print(f"[Security] A solicitar revelação de identidade para o token: {token_id}...")
+    print(f"[Security] Requesting identity disclosure for the token: {token_id}...")
 
     payload = {
         "encrypted_identity": encrypted_identity_blob,
@@ -102,10 +102,10 @@ def request_winner_reveal(client, token_id, encrypted_identity_blob):
             hashes.SHA256()
         )
 
-        print("[Security] ASSINATURA DA CA VÁLIDA! Identidade Confirmada.")
-        print(f" -> Vencedor Real (UID): {receipt_data['real_uid']}")
+        print("[Security] VALID CA SIGNATURE! Identity confirmed.")
+        print(f" -> Actual Winner (UID): {receipt_data['real_uid']}")
         return receipt_data
 
     except Exception as e:
-        print(f"[!] FALHA CRÍTICA NA VALIDAÇÃO DA CA: {e}")
+        print(f"[!] CRITICAL FAILURE IN CA VALIDATION: {e}")
         return None

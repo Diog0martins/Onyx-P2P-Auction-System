@@ -16,15 +16,15 @@ def handle_auction_end(client_state, obj):
     info = auction_list.get(auction_target)
 
     if info is None:
-        print(f"[INFO] Recebido AUCTION_END para subasta desconhecida {auction_target}")
+        print(f"[INFO] AUCTION_END received for unknown auction {auction_target}")
         return
 
     closing_timestamp = info.get("closing_date")
     closing_dt = datetime.fromtimestamp(closing_timestamp)
-    print(f"\n--- 🔔 AVISO DE FECHE DE LEILAO ---")
-    print(f"LEILAO FINALIZADO: ID {auction_target}")
-    print(f"Hora de Feche Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Hora Atual: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"\n--- 🔔 AUCTION CLOSING NOTICE ---")
+    print(f"AUCTION CLOSED: ID {auction_target}")
+    print(f"Time to Close Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"-----------------------------------\n")
 
     # If USer consideres himself the winner
@@ -42,16 +42,8 @@ def handle_auction_end(client_state, obj):
                 r_value = client_state.token_manager.get_blinding_factor_r(token_id)
 
                 if r_value is None:
-                    print(f"[!] Erro Crítico: Token ID {token_id} não encontrado na wallet local.")
+                    print(f"[!] Critical Error: Token ID {token_id} not found in local wallet.")
                     return
-
-                # Need Parameters
-                # random number used to blind - r
-                # el otro parametro
-                # mi llave publica
-                # token ??
-                # id auction
-                # calculo el A
 
                 deal_key = generate_aes_key()
                 add_winning_key(client_state.auctions, auction_target, deal_key)
@@ -71,7 +63,7 @@ def handle_auction_end(client_state, obj):
                 try:
                     token_data = client_state.token_manager.get_token()
                 except Exception as e:
-                    print(f"[!] Não foi possível criar Auction: {e}")
+                    print(f"[!] Unable to create Auction: {e}")
                     return None
 
                 public_payload_obj = {
@@ -85,17 +77,14 @@ def handle_auction_end(client_state, obj):
                 response_json = json.dumps(public_payload_obj)
                 c_response_json = encrypt_message_symmetric_gcm(response_json, client_state.group_key)
 
-                print(f"[WINNER] Enviando revelação do factor cegador 'r' para a subasta {auction_target}...")
+                print(f"[WINNER] Submitting blind factor “r” revelation for auction {auction_target}...")
                 send_to_peers(c_response_json, client_state.peer.connections)
             
             else:
-                print("[ERROR] Token ID não encontrado.")
+                print("[ERROR] Token ID not found.")
                 return
             
-            # ... tu lógica de procesamiento posterior aquí ...
-            
         else:
-            print("[ERROR] Leilao finalizado sem token de ganhador nos dados.")
-            # Puedes manejar el caso donde no hay token si es un escenario válido
+            print("[ERROR] Auction ended without a winner token in the data.")
     else:
         return

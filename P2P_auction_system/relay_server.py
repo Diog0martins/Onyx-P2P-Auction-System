@@ -19,24 +19,21 @@ RELAY_GROUP_KEY = None
 
 def peer_left(uuid):
     message = leave_network(uuid)
-    #print(message)
     return (message+'\n').encode()
 
 
 def handle_client(conn, addr):
-    print(f"[Relay] Peer conectado: {addr}")
+    print(f"[Relay] Peer conected: {addr}")
     
     user_uuid = "NA"
     try:
-        # Assume-se que a primeira mensagem do cliente é o seu UUID
-        # Ajuste o tamanho 1024 se necessário
         initial_data = conn.recv(1024).decode('utf-8').strip()
         if not initial_data:
-            return # Se não enviou nada, desconecta logo
+            return 
         user_uuid = initial_data
-        print(f"[Relay] UUID registado para {addr}: {user_uuid}")
+        print(f"[Relay] UUID registered for {addr}: {user_uuid}")
     except Exception as e:
-        print(f"[Relay] Erro ao receber UUID de {addr}: {e}")
+        print(f"[Relay] Error receiving UUID from {addr}: {e}")
         conn.close()
         return
 
@@ -68,10 +65,10 @@ def handle_client(conn, addr):
             break
         except Exception as e:
             if not STOP_EVENT.is_set():
-                print(f"[Relay] Erro na conexão {user_uuid} ({addr}): {e}")
+                print(f"[Relay] Connection error {user_uuid} ({addr}): {e}")
             break
 
-    print(f"[Relay] Peer desconectado: {user_uuid} ({addr})")
+    print(f"[Relay] Peer disconnected: {user_uuid} ({addr})")
     
     to_send = peer_left(user_uuid)
     with RELAY_LOCK:
@@ -98,9 +95,9 @@ def start_relay_server(host, port):
         server.bind((host, port))
         server.listen()
         server.settimeout(1.0)
-        print(f"[Relay] À escuta em {host}:{port} (Pressiona CTRL+C para sair)...")
+        print(f"[Relay] Listening on {host}:{port} (Press CTRL+C to exit)...")
     except Exception as e:
-        print(f"[Relay] Falha ao iniciar servidor: {e}")
+        print(f"[Relay] Failure to start server: {e}")
         return
 
     try:
@@ -112,9 +109,9 @@ def start_relay_server(host, port):
             except socket.timeout:
                 continue
             except Exception as e:
-                print(f"[Relay] Erro no accept: {e}")
+                print(f"[Relay] Error in accept: {e}")
     except KeyboardInterrupt:
-        print("\n[Relay] A encerrar servidor...")
+        print("\n[Relay] Shutting down server...")
     finally:
         STOP_EVENT.set()
         server.close()
@@ -125,7 +122,7 @@ def start_relay_server(host, port):
                     c.close()
                 except:
                     pass
-        print("[Relay] Servidor encerrado com sucesso.")
+        print("[Relay] Server successfully shut down.")
 
 
 def main():
@@ -137,7 +134,7 @@ def main():
     try:
         host, port = parse_config(config_name)
     except Exception as e:
-        print(f"[Relay] Erro ao ler config: {e}")
+        print(f"[Relay] Error reading config: {e}")
         sys.exit(1)
 
     if not user_path.exists():
@@ -146,13 +143,13 @@ def main():
     private_key, public_key = prepare_key_pair_generation(user_path)
 
     relay_client = Client(user_path, public_key, private_key)
-    print("[Relay] A registar na CA...")
+    print("[Relay] To be recorded in the CA...")
     try:
         info = connect_and_register_to_ca(relay_client)
         RELAY_GROUP_KEY = info["group_key"]
-        print("[Relay] Certificado e Chave de Grupo obtidos.")
+        print("[Relay] Certificate and Group Key obtained.")
     except Exception as e:
-        print(f"[Relay] Falha ao registar na CA: {e}")
+        print(f"[Relay] Failed to register with CA: {e}")
         sys.exit(1)
 
     start_relay_server(host, port)

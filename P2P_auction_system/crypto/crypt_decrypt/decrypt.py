@@ -5,7 +5,7 @@ from cryptography.exceptions import InvalidTag
 import os
 import base64
 import json
-from cryptography.hazmat.primitives import hashes # Não usado diretamente para GCM, mas útil para funções de chave
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding as asym_padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
@@ -18,52 +18,52 @@ def decrypt_message_symmetric_gcm(payload_json: str, key: bytes) -> str:
     """
     data = json.loads(payload_json)
 
-    # 1. Decodificar Nonce, Ciphertext e Tag
+    # 1. Decoding Nonce, Ciphertext, and Tag
     nonce = base64.b64decode(data["nonce"])
     ciphertext = base64.b64decode(data["ciphertext"])
-    tag = base64.b64decode(data["tag"]) # A Tag é crucial para a autenticação
+    tag = base64.b64decode(data["tag"]) # The tag is crucial for authentication.
 
-    # 2. Configurar a cifra com AES-256 e modo GCM
-    # NOTA: No GCM, é mais comum (e idiomático) usar a interface AESGCM, 
-    # mas para manter a consistência com o seu uso de Cipher/modes, 
-    # continuaremos com ela, embora seja um pouco mais verboso.
+    # 2. Configure the cipher with AES-256 and GCM mode
+    # NOTE: In GCM, it is more common (and idiomatic) to use the AESGCM interface, 
+    # but to maintain consistency with your use of Cipher/modes, 
+    # we will continue with it, even though it is a little more verbose.
 
     cipher = Cipher(algorithms.AES(key), modes.GCM(nonce))
     decryptor = cipher.decryptor()
 
-    # Dados Adicionais Autenticados (AAD). Deve ser o mesmo usado na encriptação.
+    # Authenticated Additional Data (AAD). Must be the same as that used in encryption.
     aad = b""
     decryptor.authenticate_additional_data(aad)
 
-    # 3. Desencriptar e verificar a Tag
+    # 3. Decrypt and verify the Tag
     try:
-        # A chamada finalize_with_tag faz a desencriptação E a verificação da tag
+        # The finalize_with_tag call performs decryption AND tag verification.
         plaintext_bytes = decryptor.update(ciphertext) + decryptor.finalize_with_tag(tag)
     except InvalidTag:
-        # ESTE É O PONTO CRÍTICO: se a tag for inválida, a mensagem foi alterada.
+        # THIS IS THE CRITICAL POINT: if the tag is invalid, the message has been altered.
         raise ValueError("Invalid authentication tag. Data integrity check failed.")
 
-    # 4. Decodificar e retornar a mensagem (GCM não tem padding)
+    # 4. Decode and return the message (GCM does not have padding)
     message = plaintext_bytes.decode()
     return message
 
 def decrypt_with_private_key(ciphertext: bytes, private_key_pem: bytes) -> bytes:
     """
-    Desencripta dados usando uma chave privada RSA (PEM).
+    Decrypts data using an RSA private key (PEM).
     
-    ciphertext: Dados cifrados.
-    private_key_pem: Chave privada do destinatário (Vendedor) em formato PEM.
+    ciphertext: Encrypted data.
+    private_key_pem: Recipient's (Seller's) private key in PEM format.
     """
-    # Carregar a chave privada do PEM
+    # Upload the PEM private key
     private_key = serialization.load_pem_private_key(
         private_key_pem,
-        password=None # Assumindo que a chave privada não está protegida por senha
+        password=None # Assuming that the private key is not password protected
     )
 
     if not isinstance(private_key, rsa.RSAPrivateKey):
         raise TypeError("A chave carregada não é uma chave privada RSA.")
 
-    # Desencriptar usando OAEP, que deve corresponder ao esquema de padding usado na encriptação
+    # Decrypt using OAEP, which must match the padding scheme used in encryption.
     plaintext = private_key.decrypt(
         ciphertext,
         asym_padding.OAEP(

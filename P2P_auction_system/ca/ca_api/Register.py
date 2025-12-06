@@ -1,12 +1,12 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 
-# Entra no /register
+# Enter /register
 class RegisterReq(BaseModel):
     csr_pem_b64: str = Field(..., description="Base64-encoded PEM CSR")
 
 
-# Sai do /register
+# Leave /register
 class RegisterResp(BaseModel):
     uid: str
     cert_pem_b64: str

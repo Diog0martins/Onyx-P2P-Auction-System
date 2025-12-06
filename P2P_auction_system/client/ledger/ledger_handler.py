@@ -73,7 +73,7 @@ def ledger_update_handler(client, ledger_update_message):
             client.ledger_request_id = 0
 
             translated_ledger = ledger_to_auction_dict(client.ledger)
-            print(translated_ledger)
+            # print(translated_ledger)
             client.auctions = translated_ledger
 
 def init_cli_ledger(client, user_path):

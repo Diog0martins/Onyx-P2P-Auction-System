@@ -22,7 +22,7 @@ def send_auction_creation_proof(client_state, auction_id, deal_key):
             r_value = client_state.token_manager.get_blinding_factor_r(token_id)
 
             if r_value is None:
-                print(f"[!] Erro Crítico: Token ID {token_id} não encontrado na wallet local.")
+                print(f"[!] Critical Error: Token ID {token_id} not found in local wallet.")
                 return
 
             private_payload_obj = {
@@ -37,7 +37,7 @@ def send_auction_creation_proof(client_state, auction_id, deal_key):
             try:
                 token_data = client_state.token_manager.get_token()
             except Exception as e:
-                print(f"[!] Não foi possível criar Auction: {e}")
+                print(f"[!] Unable to create Auction: {e}")
                 return None
 
             msg = {
@@ -50,7 +50,7 @@ def send_auction_creation_proof(client_state, auction_id, deal_key):
             response_json = json.dumps(msg)
             c_response_json = encrypt_message_symmetric_gcm(response_json, client_state.group_key)
 
-            print(f"[Auction] Enviando revelação do factor cegador 'r' para a subasta {auction_id}...")
+            print(f"[Auction] Submitting blind factor “r” disclosure for auction {auction_id}...")
             from network.tcp import send_to_peers
             send_to_peers(c_response_json, client_state.peer.connections)
 
@@ -59,14 +59,12 @@ def handle_winner_reveal(client_state, obj):
 
     auction_id = obj.get("auction_id")
     
-    # 1. RECUPERAR CLAVES LOCALES (Vendedor)
     my_auction = client_state.auctions["my_auctions"].get(auction_id)
     
     if my_auction is None:
-        print(f"[ERROR] Recibido WINNER_REVEAL para subasta {auction_id} que no me pertenece.")
+        print(f"[ERROR] Received WINNER_REVEAL for auction {auction_id} that does not belong to me.")
         return
 
-    # La clave privada de la subasta está almacenada como STRING PEM.
     my_auction_private_key_pem = my_auction.get("private_key")
     
     if my_auction_private_key_pem is None:
@@ -75,50 +73,40 @@ def handle_winner_reveal(client_state, obj):
     cleaned_pem_string = my_auction_private_key_pem.strip()
     private_key_pem_bytes = cleaned_pem_string.encode('utf-8') 
     
-    # 2. Desencriptar a Deal Key (Capa Intermédia - RSA Asimétrica)
     deal_key_encrypted_b64 = obj.get("deal_key")
 
-    # NOTA: O payload cifrado 'deal_key_encrypted_b64' DEVE ser decodificado:
     try:
-        deal_key_encrypted_bytes = b64d(deal_key_encrypted_b64) # <-- b64d só aqui!
+        deal_key_encrypted_bytes = b64d(deal_key_encrypted_b64)
     except Exception as e:
-        print(f"[ERROR] Falha ao decodificar Base64 da Deal Key cifrada: {e}")
+        print(f"[ERROR] Failed to decode encrypted Deal Key Base64: {e}")
         return
     
-
     try:
         deal_key_bytes = decrypt_with_private_key(
             deal_key_encrypted_bytes, 
             private_key_pem_bytes
         )
     except Exception as e:
-        print(f"[SECURITY] Falha na Desencriptação RSA (Deal Key): {e}")
+        print(f"[SECURITY] RSA Decryption Failure (Deal Key): {e}")
         return
     
 
-
-    # 3. DESENCRIPTAR CONTENIDO PRIVADO (Capa Interna - Deal Key Simétrica)
-    
-    # El 'private_info' es una string JSON con {nonce, ciphertext, tag} (GCM)
     private_payload_crypted_json = obj.get("private_info")
     
-    # Decifrar el payload interno usando la deal_key (bytes)
     try:
         private_payload_json = decrypt_message_symmetric_gcm(
             private_payload_crypted_json, 
-            deal_key_bytes # La Deal Key ya está en bytes
+            deal_key_bytes
         )
         
-        # Cargar el JSON interno
         private_info_obj = json.loads(private_payload_json)
-
-        # 4. RESULTADO FINAL
+        
         revealed_token_id = private_info_obj.get("token_winner_bid_id")
         r_reveald = private_info_obj.get("blinding_factor_r")
         
-        print("\n=== REVELACIÓN DEL GANADOR PROCESADA ===")
-        print(f"Token ID del Ganador: {revealed_token_id}")
-        print(f"Factor Cegador 'r': {r_reveald}")
+        print("\n=== Winner announcement processed ===")
+        print(f"Winner's Token ID: {revealed_token_id}")
+        print(f"Blinding Factor 'r': {r_reveald}")
 
         
         token_sig = client_state.ledger.find_token_signature(revealed_token_id)
@@ -126,7 +114,7 @@ def handle_winner_reveal(client_state, obj):
             return
     
     except Exception as e:
-        print(f"[SECURITY] Falha na Desencriptação GCM (Conteúdo Privado): {e}")
+        print(f"[SECURITY] GCM Decryption Failure (Private Content): {e}")
         return
     
     add_winning_key(client_state.auctions, auction_id, deal_key_bytes)

@@ -13,26 +13,26 @@ def encrypt_message_symmetric_gcm(message: str, key: bytes) -> str:
     message: string a cifrar
     key: bytes de 32 bytes (AES-256)
     """
-    # 1. Gerar Nonce aleatório (AES-GCM usa 12 bytes por padrão)
-    # O nonce DEVE ser único para cada encriptação com a mesma chave.
+    # 1. Generate random nonce (AES-GCM uses 12 bytes by default)
+    # The nonce MUST be unique for each encryption with the same key.
     nonce = os.urandom(12)
 
-    # 2. Configurar a cifra com AES-256 e modo GCM
+    # 2. Configure the cipher with AES-256 and GCM mode
     cipher = Cipher(algorithms.AES(key), modes.GCM(nonce))
     encryptor = cipher.encryptor()
 
-    # Dados Adicionais Autenticados (AAD). Opcional, mas boa prática.
-    # Neste caso, usamos AAD vazio, mas é autenticado junto com a mensagem.
+    # Authenticated Additional Data (AAD). Optional, but good practice.
+    # In this case, we use empty AAD, but it is authenticated along with the message.
     aad = b""
     encryptor.authenticate_additional_data(aad)
 
-    # 3. Encriptar a mensagem (sem padding)
+    # 3. Encrypt the message (without padding)
     ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
 
-    # 4. Obter a tag de autenticação GCM
+    # 4. Obtain the GCM authentication tag
     tag = encryptor.tag
 
-    # 5. Criar JSON com Nonce + ciphertext + tag
+    # 5. Create JSON with Nonce + ciphertext + tag
     payload = {
         "nonce": base64.b64encode(nonce).decode(),
         "ciphertext": base64.b64encode(ciphertext).decode(),
@@ -42,18 +42,18 @@ def encrypt_message_symmetric_gcm(message: str, key: bytes) -> str:
 
 def encrypt_with_public_key(message_bytes: bytes, public_key_pem: bytes) -> bytes:
     """
-    Encripta dados usando uma chave pública RSA (PEM).
+    Encrypts data using an RSA public key (PEM).
     
-    message_bytes: Dados a serem cifrados (devem ser curtos para RSA).
-    public_key_pem: Chave pública do destinatário (Vendedor) em formato PEM.
+    message_bytes: Data to be encrypted (must be short for RSA).
+    public_key_pem: Recipient's (Seller's) public key in PEM format.
     """
-    # Carregar a chave pública do PEM
+    # Upload the PEM public key
     public_key = serialization.load_pem_public_key(public_key_pem)
 
     if not isinstance(public_key, rsa.RSAPublicKey):
-        raise TypeError("A chave carregada não é uma chave pública RSA.")
+        raise TypeError("The loaded key is not an RSA public key.")
 
-    # Encriptar usando OAEP (Optimal Asymmetric Encryption Padding)
+    # Encrypt using OAEP (Optimal Asymmetric Encryption Padding)
     ciphertext = public_key.encrypt(
         message_bytes,
         asym_padding.OAEP(

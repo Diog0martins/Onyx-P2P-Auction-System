@@ -64,5 +64,5 @@ def hybrid_decrypt(payload_json: str, private_key) -> Any | None:
         return json.loads(plaintext.decode('utf-8'))
 
     except Exception as e:
-        print(f"Erro na desencriptação híbrida: {e}")
+        print(f"Hybrid decryption error: {e}")
         return None

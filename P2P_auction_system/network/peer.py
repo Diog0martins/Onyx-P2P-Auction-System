@@ -39,43 +39,33 @@ def check_auctions(client_state):
             if closing_timestamp and now >= closing_timestamp and auction_data_list.get("finished") == False:
                 
                 closing_dt = datetime.fromtimestamp(closing_timestamp)
-                print(f"\n--- 🔔 AVISO DE FECHE DE LEILAO ---")
-                print(f"LEILAO FINALIZADO: ID {auction_id}")
-                print(f"Hora de Feche Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
-                print(f"Hora Atual: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
+                print(f"\n--- 🔔 AUCTION CLOSING NOTICE ---")
+                print(f"AUCTION CLOSED: ID {auction_id}")
+                print(f"Time to Close Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
+                print(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
                 print(f"-----------------------------------\n")
-
-                # 1. Obtenha o objeto chave (assumindo que ele está nos seus dados do leilão)
-                # rsa_public_key_object = client_state.public_key
-
-                # 2. CONVERTER PARA STRING PEM
-                # public_key_pem_str = rsa_public_key_object.public_bytes(
-                #     encoding=serialization.Encoding.PEM,
-                #     format=serialization.PublicFormat.SubjectPublicKeyInfo
-                # ).decode('utf-8') # Decodificar para string para ser JSON serializável
 
                 try:
                     token_data = client_state.token_manager.get_token()
                 except Exception as e:
-                    print(f"[!] Não foi possível criar Auction: {e}")
+                    print(f"[!] Unable to create Auction: {e}")
                     return None
 
-                # Creo msg de tipo auctionEnd
                 auctionEnd_obj = {
                     "type": "auctionEnd",
                     "auction_id": auction_id,
                     "token": token_data,
                 }
-                # Encripto msg
+
                 auctionEnd_json = json.dumps(auctionEnd_obj)
                 msg = encrypt_message_symmetric_gcm(auctionEnd_json, client_state.group_key)
-                # Envio msg
+
                 send_to_peers(msg, client_state.peer.connections)
                 client_state.auctions["auction_list"][auction_id]["finished"] = True
                 
         time.sleep(10)
 
-    print("[INFO] Hilo de monitorización de subastas finalizado.")
+    print("[INFO] Auction monitoring thread completed.")
 
 def user_auction_input(connections, stop_event, client):
 
@@ -104,10 +94,10 @@ def user_auction_input(connections, stop_event, client):
         msg = encrypt_message_symmetric_gcm(msg, client.group_key)
 
         if not connections:
-            print("[!] Sem conexão ao Relay. Mensagem não enviada.")
+            print("[!] No connection to Relay. Message not sent.")
             continue
 
-        # Enviar para a única conexão que temos (o Relay)
+        # Send to the only connection we have (the Relay)
         send_to_peers(msg, client.peer.connections)
 
 def peer_messaging(state: PeerState, client):
@@ -120,13 +110,13 @@ def peer_messaging(state: PeerState, client):
     t.join()
 
 def run_peer(host, port, client):
-    # 1. Carregar configuração do Relay dinamicamente
+    #1. Load Relay configuration dynamically
     try:
         relay_host, relay_port = parse_config("configRelay")
-        print(f"[*] Configuração do Relay carregada: {relay_host}:{relay_port}")
+        print(f"[*] Relay configuration loaded: {relay_host}:{relay_port}")
     except Exception as e:
-        print(f"[!] Erro crítico: Não foi possível ler 'config/configRelay/configRelay.json'.")
-        print(f"[!] Detalhes: {e}")
+        print(f"[!] Critical error: Unable to read 'config/configRelay/configRelay.json'.")
+        print(f"[!] Details: {e}")
         sys.exit(1)
 
     if TEST == 1:
@@ -136,8 +126,8 @@ def run_peer(host, port, client):
 
     client.peer = state
 
-    # 2. Iniciar a conexão persistente ao Relay
-    # Substitui o antigo udp_socket e tcp_socket
+    # 2. Start persistent connection to Relay
+    # Replaces the old udp_socket and tcp_socket
     relay_thread = threading.Thread(
         target=connect_to_relay,
         args=(state, relay_host, relay_port, client),
@@ -155,7 +145,7 @@ def run_peer(host, port, client):
 
     peer_udp_handling(client)
 
-    # 3. Iniciar o Menu do Utilizador (Loop Principal)
+    #3. Launch the User Menu (Main Loop)
     peer_messaging(state, client)
     await_new_peers_conn(state, client)
 

@@ -37,7 +37,7 @@ def get_client_identity(client_state, msg):
         remove_winning_key(client_state.auctions, auction_id)
 
     except Exception as e:
-        print(f"[SECURITY] Falha na Desencriptação GCM (Conteúdo Privado): {e}")
+        print(f"[SECURITY] GCM Decryption Failure (Private Content): {e}")
         return    
 
 def send_winner_identity(client_state, auction_id, deal_key):
@@ -52,7 +52,7 @@ def send_winner_identity(client_state, auction_id, deal_key):
     try:
         token_data = client_state.token_manager.get_token()
     except Exception as e:
-        print(f"[!] Não foi possível criar Auction: {e}")
+        print(f"[!] Auction could not be created: {e}")
         return None
 
     msg = {
@@ -99,7 +99,7 @@ def prepare_winner_identity(client_state, msg):
         r_reveald = private_info_obj.get("blinding_factor_r")
         auctioner_cert_pem = b64d(private_info_obj.get("certificate"))
         
-        print("\n=== REVELACIÓN DEL GANADOR PROCESADA ===")
+        print("\n=== Winner announcement processed ===")
         print(f"Auction Token id: {revealed_token_id}")
         print(f"Blinding Factor 'r': {r_reveald}")
 
@@ -114,7 +114,7 @@ def prepare_winner_identity(client_state, msg):
         print("= ===== ==== ==== ==== ==== ===== =")
 
     except Exception as e:
-        print(f"[SECURITY] Falha na Desencriptação GCM (Conteúdo Privado): {e}")
+        print(f"[SECURITY] GCM Decryption Failure (Private Content): {e}")
         return
     
     send_winner_identity(client_state, auction_id, deal_key)

@@ -23,12 +23,12 @@ def prepare_ca(ca_path, db_path):
 def run_ca():
     
     if TEST != 1:
-        print(f"[CA] TEST != 1 (TEST={TEST}). CA não será iniciada neste modo.")
+        print(f"[CA] TEST != 1 (TEST={TEST}). CA will not start in this mode.")
         sys.exit(0)
 
     host, port = parse_config_file("configCA/configCA.json")
 
-    print(f"[CA] A iniciar CA em {host}:{port}")
+    print(f"[CA] Starting CA on {host}:{port}")
 
     app.state.DB_PATH = os.environ.get("CA_DB_PATH", "ca/ca.db")
 
