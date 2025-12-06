@@ -1,10 +1,17 @@
 import json
+import secrets
 
 from crypto.keys.keys_crypto import generate_key_pair
 from datetime import datetime, timedelta, timezone # Módulos de data/hora
 import time # Para timestamp Unix
 
-AUCTION_DURATION_SECONDS = 20
+from client.ca_handler.ca_message import get_valid_timestamp
+
+from crypto.crypt_decrypt.hybrid import hybrid_encrypt
+
+from crypto.encoding.b64 import b64e
+
+AUCTION_DURATION_SECONDS = 10
 
 def cmd_auction(client, name, bid):
     try:
@@ -22,6 +29,16 @@ def cmd_auction(client, name, bid):
     future_time = datetime.now(timezone.utc) + timedelta(seconds=AUCTION_DURATION_SECONDS)
     closing_timestamp = int(future_time.timestamp())
 
+    identity_pkg = {
+        "real_uid": client.uuid,
+        "cert_pem_b64": b64e(client.cert_pem) if isinstance(client.cert_pem, bytes) else client.cert_pem,
+        "token_id_bound": token_data["token_id"],
+        "nonce": secrets.token_hex(16)
+    }
+
+    encrypted_identity_blob = hybrid_encrypt(identity_pkg, client.ca_pub_pem)
+    timestamp = get_valid_timestamp()
+
     # Broadcast version
     auction_obj = {
         "id": auction_id,
@@ -30,7 +47,9 @@ def cmd_auction(client, name, bid):
         "closing_date": closing_timestamp,
         "min_bid": bid,
         "token": token_data,
-        "public_key": public_key_str
+        "public_key": public_key_str,
+        "encrypted_identity": encrypted_identity_blob,
+        "timestamp": timestamp,
     }
 
     add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp, token_data, public_key_str)

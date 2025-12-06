@@ -18,6 +18,7 @@ import threading
 import time
 from datetime import datetime
 from cryptography.hazmat.primitives import serialization
+from client.ca_handler.ca_message import get_valid_timestamp
 
 def check_auctions(client_state):
 
@@ -51,10 +52,13 @@ def check_auctions(client_state):
                     print(f"[!] Unable to create Auction: {e}")
                     return None
 
+                timestamp = get_valid_timestamp()
+
                 auctionEnd_obj = {
                     "type": "auctionEnd",
                     "auction_id": auction_id,
                     "token": token_data,
+                    "timestamp": timestamp
                 }
 
                 auctionEnd_json = json.dumps(auctionEnd_obj)

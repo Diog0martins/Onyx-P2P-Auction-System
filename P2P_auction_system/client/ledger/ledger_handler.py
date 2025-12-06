@@ -2,6 +2,7 @@ import json, random
 from pathlib import Path
 from client.ledger.ledger_logic import Ledger, compare_chains
 from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
+from client.ca_handler.ca_message import get_valid_timestamp
 
 
 CONFIG_DIR = Path.cwd() / "config"
@@ -23,11 +24,14 @@ def ledger_request_handler(request_id, client):
         print(f"[!] It was not possible to bid: {e}")
         return None
 
+    timestamp = get_valid_timestamp()
+
     upadte_obj = {
         "request_id": request_id,
         "type": "ledger_update",
         "ledger": to_send,
-        "token": token_data
+        "token": token_data,
+        "timestamp": timestamp
     }
 
     upadte_json = json.dumps(upadte_obj)
@@ -45,10 +49,13 @@ def prepare_ledger_request(client):
 
     client.ledger_request_id = random.randint(1, 1000000000)
 
+    timestamp = get_valid_timestamp()
+
     update_obj = {
         "request_id": client.ledger_request_id,
         "type": "ledger_request",
-        "token": token_data
+        "token": token_data,
+        "timestamp": timestamp
     }
 
     update_json = json.dumps(update_obj)

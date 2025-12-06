@@ -8,6 +8,8 @@ from typing import Dict, Tuple, Optional
 from cryptography.hazmat.primitives import hashes
 from crypto.token.crypto_token import BlindRSACore
 
+from client.ca_handler.ca_message import get_valid_timestamp
+
 CA_URL = "http://127.0.0.1:8443"
 
 def verify_peer_blinding_data(ca_pub_pem: bytes, peer_uid: str, peer_token_id: str, peer_r: int, peer_signature_b64: str) -> bool:
@@ -137,12 +139,14 @@ class TokenManager:
             except:
                 pass
 
+        timestamp = get_valid_timestamp()
+
         entry = {
             "token_id": token_id,
             "blinded_token_b64": blinded_token,
             "blinding_factor_r": str(r),
             "token_signature_b64": token_sig,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": timestamp,
         }
 
         wallet.append(entry)

@@ -1,11 +1,17 @@
+import secrets
+
 from cryptography.hazmat.primitives import serialization
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm, encrypt_with_public_key
 from datetime import datetime
 import json
 import time
+import client
 from crypto.encoding.b64 import b64e
 from crypto.keys.keys_crypto import generate_aes_key
 from client.message.auction.auction_handler import add_winning_key
+
+from client.ca_handler.ca_message import get_valid_timestamp
+from crypto.crypt_decrypt.hybrid import hybrid_encrypt
 
 def handle_auction_end(client_state, obj):
     from network.tcp import send_to_peers
@@ -27,18 +33,15 @@ def handle_auction_end(client_state, obj):
     print(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"-----------------------------------\n")
 
-    # If USer consideres himself the winner
     if info.get("my_bid") == 'True':
-        
-        # Get token used the last bid
+
         my_winning_token = info.get("last_bid_token_data")
-        
-        # Prepare proof that token is owned by user
+
         if my_winning_token:
 
             token_id = my_winning_token.get("token_id")
-            
-            if token_id:                    
+
+            if token_id:
                 r_value = client_state.token_manager.get_blinding_factor_r(token_id)
 
                 if r_value is None:
@@ -66,12 +69,25 @@ def handle_auction_end(client_state, obj):
                     print(f"[!] Unable to create Auction: {e}")
                     return None
 
+                identity_pkg = {
+                    "real_uid": client_state.uuid,
+                    "cert_pem_b64": b64e(client_state.cert_pem) if isinstance(client_state.cert_pem, bytes) else client_state.cert_pem,
+                    "token_id_bound": token_data["token_id"],
+                    "nonce": secrets.token_hex(16)
+                }
+
+                encrypted_identity_blob = hybrid_encrypt(identity_pkg, client_state.ca_pub_pem)
+
+                timestamp = get_valid_timestamp()
+
                 public_payload_obj = {
-                    "type": "winner_token_reveal", 
+                    "type": "winner_token_reveal",
                     "auction_id": auction_target,
                     "token": token_data,
                     "deal_key": deal_key_encrypted_b64,
-                    "private_info": private_payload
+                    "private_info": private_payload,
+                    "encrypted_identity": encrypted_identity_blob,
+                    "timestamp": timestamp,
                 }
 
                 response_json = json.dumps(public_payload_obj)
@@ -79,11 +95,11 @@ def handle_auction_end(client_state, obj):
 
                 print(f"[WINNER] Submitting blind factor “r” revelation for auction {auction_target}...")
                 send_to_peers(c_response_json, client_state.peer.connections)
-            
+
             else:
                 print("[ERROR] Token ID not found.")
                 return
-            
+
         else:
             print("[ERROR] Auction ended without a winner token in the data.")
     else:

@@ -5,6 +5,7 @@ from crypto.encoding.b64 import b64d, b64e
 from client.message.auction.auction_handler import get_winning_key, remove_winning_key
 from crypto.token.token_manager import verify_peer_blinding_data
 from crypto.certificates.certificates import inspect_certificate
+from client.ca_handler.ca_message import get_valid_timestamp
 
 def get_client_identity(client_state, msg):
     auction_id = msg.get("auction_id")
@@ -55,11 +56,14 @@ def send_winner_identity(client_state, auction_id, deal_key):
         print(f"[!] Auction could not be created: {e}")
         return None
 
+    timestamp = get_valid_timestamp()
+
     msg = {
         "type": "winner_revelation",
         "auction_id": auction_id,
         "token": token_data,
-        "private_info": private_payload
+        "private_info": private_payload,
+        "timestamp": timestamp
     }
 
     response_json = json.dumps(msg)
