@@ -13,6 +13,7 @@ def get_client_identity(client_state, msg):
 
     if deal_key == None:
         print(f"You did not win auction {auction_id}")
+        return
     
     private_payload_crypted_json = msg.get("private_info")
     
@@ -76,6 +77,7 @@ def prepare_winner_identity(client_state, msg):
 
     if deal_key == None:
         print(f"You did not win auction {auction_id}")
+        return
     
     private_payload_crypted_json = msg.get("private_info")
     

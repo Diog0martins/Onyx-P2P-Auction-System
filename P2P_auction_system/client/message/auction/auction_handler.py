@@ -4,7 +4,7 @@ from crypto.keys.keys_crypto import generate_key_pair
 from datetime import datetime, timedelta, timezone # Módulos de data/hora
 import time # Para timestamp Unix
 
-AUCTION_DURATION_SECONDS = 5
+AUCTION_DURATION_SECONDS = 20
 
 def cmd_auction(client, name, bid):
     try:

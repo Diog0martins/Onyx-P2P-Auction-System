@@ -13,6 +13,7 @@ from ca.ca_api.Tokens import TokensReq, TokensResp
 from crypto.encoding.b64 import b64e
 from crypto.certificates.certificates import make_x509_certificate, verify_csr
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
+from crypto.crypt_decrypt.hybrid import hybrid_decrypt
 
 from crypto.keys.keys_crypto import get_pub_bytes
 
@@ -20,6 +21,8 @@ from ca.ca_api.BlindTokens import BlindSignReq
 from crypto.encoding.b64 import b64e, b64d
 
 from crypto.keys.keys_crypto import generate_aes_key
+
+from pydantic import BaseModel
 
 
 # FastAPI Service Instance
@@ -224,3 +227,44 @@ def leave_network(req: dict, request: Request):
         "new_keys": encrypt_message_symmetric_gcm(to_send, old_key)
     } 
 
+
+class RevealReq(BaseModel):
+    encrypted_identity: str
+    token_id_disputed: str
+    requester_uid: str
+
+@app.post("/reveal_identity")
+def reveal_identity(req: RevealReq, request: Request):
+    ca_sk = request.app.state.CA_SK
+
+    identity_pkg = hybrid_decrypt(req.encrypted_identity, ca_sk)
+
+    if not identity_pkg:
+        raise HTTPException(status_code=400, detail="Decryption failed")
+
+    if identity_pkg.get("token_id_bound") != req.token_id_disputed:
+        raise HTTPException(status_code=400, detail="Token mismatch! Fraud detected.")
+
+    receipt_data = {
+        "status": "REVEALED",
+        "token_id": req.token_id_disputed,
+        "real_uid": identity_pkg["real_uid"],
+        "certificate_pem": identity_pkg["cert_pem_b64"],
+        "timestamp": now_iso()
+    }
+
+    data_bytes = json.dumps(receipt_data, sort_keys=True, separators=(',', ':')).encode('utf-8')
+
+    signature = ca_sk.sign(
+        data_bytes,
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+    )
+
+    return {
+        "receipt_data": receipt_data,
+        "signature_b64": b64e(signature)
+    }
