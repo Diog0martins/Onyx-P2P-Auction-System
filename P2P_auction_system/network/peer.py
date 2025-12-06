@@ -143,11 +143,14 @@ def run_peer(host, port, client):
     relay_thread.start()
     auctions_thread.start()
 
-    peer_udp_handling(client)
+    # Comentado para parar com o broadcast
+    #peer_udp_handling(client)
 
     #3. Launch the User Menu (Main Loop)
     peer_messaging(state, client)
-    await_new_peers_conn(state, client)
+
+    # Comentado porque já não se justifica
+    #await_new_peers_conn(state, client)
 
     # --- Cleanup ---
     print("[*] Shutting down peer.")
