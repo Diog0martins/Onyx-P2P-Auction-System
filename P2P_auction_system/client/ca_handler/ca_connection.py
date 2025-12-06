@@ -50,7 +50,7 @@ def connect_and_register_to_ca(client):
         sys.exit(1)
 
     data = resp.json()
-    print(f"[CA] Registration complete. UID = {data['uid']}")
+    print(f"    [CA] Registration complete. UID = {data['uid']}")
 
     # 4) Return everything the CA gave back
     return {

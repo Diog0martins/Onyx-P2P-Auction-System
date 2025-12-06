@@ -69,7 +69,7 @@ def check_auctions(client_state):
 
 def user_auction_input(connections, stop_event, client):
 
-    print("     Sending ledger request!")
+    print("Sending ledger request!")
     request = prepare_ledger_request(client)
 
     if not request == None:

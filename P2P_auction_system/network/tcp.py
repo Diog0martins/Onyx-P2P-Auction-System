@@ -18,7 +18,7 @@ def send_to_peers(msg, connections):
 
 # Function to handle messages from peers
 def handle_connection(conn, addr, client_state):
-    print(f"[+] Connected: {addr}")
+    print(f"            [+] Connected: {addr}")
     buffer = ""
     while True:
         try:
@@ -121,7 +121,7 @@ def peer_tcp_handling(client_state):
 # ======== ======== ========
 
 def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
-    print(f"[*] Connecting to RELAY at {relay_host}:{relay_port}...")
+    print(f"    [*] Connecting to RELAY at {relay_host}:{relay_port}...")
     while not state.stop_event.is_set():
         try:
             if len(state.connections) > 0:
@@ -131,7 +131,7 @@ def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             conn.connect((relay_host, relay_port))
 
-            print(f"[+] Successfully connected to Relay!")
+            print(f"        [+] Successfully connected to Relay!")
             state.connections.append(conn)
             conn.sendall((client_state.uuid).encode('utf-8'))
             handle_connection(conn, (relay_host, relay_port), client_state)

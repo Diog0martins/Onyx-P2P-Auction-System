@@ -41,13 +41,13 @@ def broadcast_message(s: socket.socket, state: PeerState, message: str):
         # Local test mode: simulate broadcast by looping through known ports
         for test_port in range(5000, 5010):
             s.sendto(message.encode(), ("127.0.0.1", test_port))
-            print(f"[LOCAL BROADCAST] Sent to 127.0.0.1:{test_port}")
+            print(f"    [LOCAL BROADCAST] Sent to 127.0.0.1:{test_port}")
     else:
         # Real LAN broadcast
         s.sendto(message.encode(), ("255.255.255.255", state.udp_port))
         print(f"[LAN BROADCAST] Sent to 255.255.255.255:{state.udp_port}")
 
-    print("Finished broadcast!")
+    print("Finished broadcast!\n")
 
 
 def listen_for_messages(s: socket.socket, client):
@@ -113,7 +113,7 @@ def peer_udp_handling(client):
         daemon=True
     ).start()
 
-    print("   Will Broadcast!")
+    print("\nWill Broadcast!")
     peer_discovery_broadcast(udp_socket, client)
 
     return udp_socket
