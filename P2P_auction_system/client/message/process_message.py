@@ -1,10 +1,12 @@
 import json
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm, encrypt_with_public_key
 from client.ledger.ledger_handler import load_public_ledger, ledger_request_handler, ledger_update_handler
 from crypto.keys.group_keys import find_my_new_key
 from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
-
-import time 
+from client.message.auction.auction_end_handler import handle_auction_end
+from client.message.winner_reveal.winner_reveal_handler import handle_winner_reveal
+from client.message.winner_reveal.final_revelation import prepare_winner_identity, get_client_identity
+import time
 
 def is_auction_closed(auctions, auction_id):
     now = int(time.time())
@@ -35,20 +37,33 @@ def verify_double_spending(token_id, client):
     return client.ledger.token_used(token_id)
 
 def update_personal_auctions(client, msg):
+    token_data = msg.get("token_data")
     if msg.get("type") == "auction":
         auction_id = msg.get("id")
         min_bid = msg.get("min_bid")
         closing_date = msg.get("closing_date")
-        add_auction(client.auctions, auction_id, min_bid, closing_date, "False")
+        public_key = msg.get("public_key")
+        
+        add_auction(client.auctions, auction_id, min_bid, closing_date, "False", token_data, public_key)
 
     else:
         auction_id = msg.get("auction_id")
         new_bid = msg.get("bid")
 
-        update_auction_higher_bid(client.auctions, auction_id, new_bid, "False")
+        update_auction_higher_bid(client.auctions, auction_id, new_bid, "False", token_data)
 
 
 def process_message(msg, client_state):
+    
+    message_types = ["auction",
+                     "bid", 
+                     "ledger_request",
+                     "ledger_update", 
+                     "auctionEnd", 
+                     "winner_token_reveal",
+                     "auction_owner_revelation",
+                     "winner_revelation"]
+
     try:
         obj = json.loads(msg)
     except:
@@ -58,8 +73,11 @@ def process_message(msg, client_state):
 
 
     mtype = obj.get("type")
-    print(obj)
-    if mtype in ("auction", "bid", "ledger_request", "ledger_update"):
+    
+    # Uncomment to print messages!
+    #print(obj)
+    
+    if mtype in message_types:
         
         token_data = obj.get("token")
         if not token_data:
@@ -76,7 +94,8 @@ def process_message(msg, client_state):
         if verify_double_spending(token_id, client_state):
             print(f"[Security] ALERTA: Tentativa de Double Spending (Token {token_id}). Ignorada.")
             return
-
+        
+        # == Auction Logic Messages
         if mtype in ("auction", "bid"):
 
             should_process = True
@@ -92,6 +111,20 @@ def process_message(msg, client_state):
                 update_personal_auctions(client_state, obj)
                 print(f"[✓] Stored {mtype} (id={obj.get('id')}) in ledger")
 
+        # == End of Auction Related Messages
+        elif mtype == "auctionEnd":
+            handle_auction_end(client_state, obj)
+
+        elif mtype == "winner_token_reveal":
+            handle_winner_reveal(client_state, obj)
+        
+        elif mtype == "auction_owner_revelation":
+            prepare_winner_identity(client_state, obj)
+
+        elif mtype == "winner_revelation":
+            get_client_identity(client_state, obj)
+
+        # == Ledger Related Messages
         elif mtype == "ledger_request":
             from network.tcp import send_to_peers
             update_json = ledger_request_handler(obj.get("request_id"), client_state)
@@ -105,9 +138,10 @@ def process_message(msg, client_state):
                 print("Receive updated ledger!")
                 ledger_update_handler(client_state, obj)
     
+    # == New key from CA
     elif mtype == "new_key":
+       
        keys = obj.get("encrypted_keys")
-       print(client_state.private_key)
        new_group_key = find_my_new_key(keys, client_state.private_key)
 
        if not new_group_key == None:

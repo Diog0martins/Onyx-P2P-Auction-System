@@ -3,6 +3,10 @@ import json
 import base64
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hashes # Não usado diretamente para GCM, mas útil para funções de chave
+from cryptography.hazmat.primitives.asymmetric import padding as asym_padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 def encrypt_message_symmetric_gcm(message: str, key: bytes) -> str:
     """
@@ -35,4 +39,28 @@ def encrypt_message_symmetric_gcm(message: str, key: bytes) -> str:
         "tag": base64.b64encode(tag).decode()
     }
     return json.dumps(payload)
+
+def encrypt_with_public_key(message_bytes: bytes, public_key_pem: bytes) -> bytes:
+    """
+    Encripta dados usando uma chave pública RSA (PEM).
+    
+    message_bytes: Dados a serem cifrados (devem ser curtos para RSA).
+    public_key_pem: Chave pública do destinatário (Vendedor) em formato PEM.
+    """
+    # Carregar a chave pública do PEM
+    public_key = serialization.load_pem_public_key(public_key_pem)
+
+    if not isinstance(public_key, rsa.RSAPublicKey):
+        raise TypeError("A chave carregada não é uma chave pública RSA.")
+
+    # Encriptar usando OAEP (Optimal Asymmetric Encryption Padding)
+    ciphertext = public_key.encrypt(
+        message_bytes,
+        asym_padding.OAEP(
+            mgf=asym_padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return ciphertext
 

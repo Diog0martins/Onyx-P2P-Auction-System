@@ -4,7 +4,7 @@ from crypto.keys.keys_crypto import generate_key_pair
 from datetime import datetime, timedelta, timezone # Módulos de data/hora
 import time # Para timestamp Unix
 
-AUCTION_DURATION_SECONDS = 60 # 1 hora
+AUCTION_DURATION_SECONDS = 5
 
 def cmd_auction(client, name, bid):
     try:
@@ -33,7 +33,7 @@ def cmd_auction(client, name, bid):
         "public_key": public_key_str
     }
 
-    add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp)
+    add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp, token_data, public_key_str)
 
     print()
     print(f"Auction created with ID {auction_id}")
@@ -50,7 +50,7 @@ def cmd_auction(client, name, bid):
 
 # ----- Utilities to have in run auction data -----
 
-def add_auction(auctions, auction_id, highest_bid, closing_timestamp, mine):
+def add_auction(auctions, auction_id, highest_bid, closing_timestamp, mine, used_token, public_key):
     if auction_id in auctions["auction_list"]:
         return False
 
@@ -60,7 +60,10 @@ def add_auction(auctions, auction_id, highest_bid, closing_timestamp, mine):
     auctions["auction_list"][auction_id] = {
         "highest_bid": highest_bid,
         "my_bid": mine,
-        "closing_date": closing_timestamp
+        "closing_date": closing_timestamp,
+        "auction_token_data": used_token,
+        "finished": False,
+        "public_key": public_key
     }
 
     return True
@@ -69,23 +72,26 @@ def get_auction_higher_bid(auctions: dict, auction_id: int):
     auction = auctions["auction_list"].get(auction_id)
     return auction["highest_bid"] if auction else None
 
-def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid):
+def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid, used_token):
     if auction_id not in auctions["auction_list"]:
         return False
 
     auctions["auction_list"][auction_id]["highest_bid"] = new_bid
     auctions["auction_list"][auction_id]["my_bid"] = is_my_bid
+    auctions["auction_list"][auction_id]["last_bid_token_data"] = used_token
     
     return True
 
-def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid, closing_timestamp):
-    added = add_auction(auctions, auction_id, starting_bid, closing_timestamp, "True")
+def add_my_auction(auctions, auction_id, public_key, private_key, starting_bid, closing_timestamp, used_token, public_key_str):
+    added = add_auction(auctions, auction_id, starting_bid, closing_timestamp, "True", used_token, public_key_str)
     if not added:
         return False
 
     auctions["my_auctions"][auction_id] = {
         "public_key": public_key,
-        "private_key": private_key
+        "private_key": private_key,
+        "auction_token_data": used_token,
+        "finished": False
     }
 
     return True
@@ -99,3 +105,12 @@ def generate_next_auction_id(auctions):
 def check_auction_existence(auctions, auction_id):
     print(auctions)
     return auction_id in auctions.get("auction_list", {})
+
+def add_winning_key(auctions_data, auction_id, crypto_key):
+    auctions_data["winning_auction"][auction_id] = crypto_key
+
+def remove_winning_key(auctions_data, auction_id):
+    auctions_data["winning_auction"].pop(auction_id, None)
+
+def get_winning_key(auctions_data, auction_id):
+    return auctions_data["winning_auction"].get(auction_id)

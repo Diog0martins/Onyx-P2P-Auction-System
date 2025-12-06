@@ -21,7 +21,7 @@ class Ledger:
     def __init__(self):
         self.chain = []
         self.current_actions = []
-        self.max_actions = 3
+        self.max_actions = 1
         self.create_ledger()
 
     # Send over the network utils -----
@@ -58,9 +58,9 @@ class Ledger:
         self.chain.append(genesis_block)
 
     # ---------------------------------------------------------
+    
     def add_action(self, action):
         self.current_actions.append(action)
-
         if len(self.current_actions) == self.max_actions:
             self.finish_block()
             return 1
@@ -113,7 +113,33 @@ class Ledger:
                 return False, f"Invalid block_hash at block {block['height']}"
 
         return True, "Chain is valid"
+
+    def find_auction_public_key(self, auction_id):
+
+        for block in self.chain:
+            for action in block.get("events", []):
+                if action.get("type") == "auction":
+                    if action.get("id") == auction_id:
+                        return action.get("public_key")
+
+        return None
     
+    def find_token_signature(self, token_id):
+        for block in self.chain:
+            for action in block.get("events", []):
+                
+                # Support both names: token or token_data
+                token_info = action.get("token")
+                
+                if not token_info:
+                    continue
+
+                if token_info.get("token_id") == token_id:
+                    return token_info.get("token_sig")
+
+        return None
+
+
     # ---------------------------------------------------------
     def save_to_file(self, path):
         """Save the current ledger chain to a JSON file."""

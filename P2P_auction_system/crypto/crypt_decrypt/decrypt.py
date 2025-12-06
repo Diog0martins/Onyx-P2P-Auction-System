@@ -5,6 +5,11 @@ from cryptography.exceptions import InvalidTag
 import os
 import base64
 import json
+from cryptography.hazmat.primitives import hashes # Não usado diretamente para GCM, mas útil para funções de chave
+from cryptography.hazmat.primitives.asymmetric import padding as asym_padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 def decrypt_message_symmetric_gcm(payload_json: str, key: bytes) -> str:
     """
@@ -41,4 +46,31 @@ def decrypt_message_symmetric_gcm(payload_json: str, key: bytes) -> str:
     # 4. Decodificar e retornar a mensagem (GCM não tem padding)
     message = plaintext_bytes.decode()
     return message
+
+def decrypt_with_private_key(ciphertext: bytes, private_key_pem: bytes) -> bytes:
+    """
+    Desencripta dados usando uma chave privada RSA (PEM).
+    
+    ciphertext: Dados cifrados.
+    private_key_pem: Chave privada do destinatário (Vendedor) em formato PEM.
+    """
+    # Carregar a chave privada do PEM
+    private_key = serialization.load_pem_private_key(
+        private_key_pem,
+        password=None # Assumindo que a chave privada não está protegida por senha
+    )
+
+    if not isinstance(private_key, rsa.RSAPrivateKey):
+        raise TypeError("A chave carregada não é uma chave privada RSA.")
+
+    # Desencriptar usando OAEP, que deve corresponder ao esquema de padding usado na encriptação
+    plaintext = private_key.decrypt(
+        ciphertext,
+        asym_padding.OAEP(
+            mgf=asym_padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return plaintext
 
