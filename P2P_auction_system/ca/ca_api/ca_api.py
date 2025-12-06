@@ -1,6 +1,8 @@
 import uuid
 import json
 from fastapi import FastAPI, HTTPException, Request
+from typing import Optional
+from datetime import datetime, timezone, timedelta
 
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -149,17 +151,25 @@ def blind_sign(req: BlindSignReq, request: Request):
 
     return {"blind_signature_b64": b64e(sig_bytes)}
 
+
 @app.get("/timestamp")
-def timestamp(request: Request):
-    
-    # 1. Get current time
-    ts = now_iso()
+def timestamp(request: Request, delta: Optional[int] = None):
+    # 1. Calcular o tempo
+    now = datetime.now(timezone.utc)
+
+    if delta is not None:
+        target_time = now + timedelta(seconds=delta)
+    else:
+        target_time = now
+
+    # 2. Formatar para ISO String
+    ts = target_time.replace(microsecond=0).isoformat()
     ts_bytes = ts.encode('utf-8')
 
-    # 2. Get CA Private Key
+    # 3. Get CA Private Key
     ca_sk = request.app.state.CA_SK
 
-    # 3. Sign the timestamp (using Standard PSS padding and SHA256)
+    # 4. Sign the timestamp
     signature = ca_sk.sign(
         ts_bytes,
         padding.PSS(
@@ -169,12 +179,11 @@ def timestamp(request: Request):
         hashes.SHA256()
     )
 
-    # 4. Return timestamp and signature
+    # 5. Return timestamp and signature
     return {
         "timestamp": ts,
         "signature": b64e(signature)
     }
-
 
 @app.post("/leave")
 def leave_network(req: dict, request: Request):

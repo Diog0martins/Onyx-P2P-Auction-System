@@ -18,6 +18,7 @@ import threading
 import time
 from datetime import datetime
 from cryptography.hazmat.primitives import serialization
+from client.ca_handler.ca_message import get_valid_timestamp
 
 def check_auctions(client_state):
 
@@ -51,10 +52,13 @@ def check_auctions(client_state):
                     print(f"[!] Unable to create Auction: {e}")
                     return None
 
+                timestamp = get_valid_timestamp()
+
                 auctionEnd_obj = {
                     "type": "auctionEnd",
                     "auction_id": auction_id,
                     "token": token_data,
+                    "timestamp": timestamp
                 }
 
                 auctionEnd_json = json.dumps(auctionEnd_obj)
@@ -143,11 +147,14 @@ def run_peer(host, port, client):
     relay_thread.start()
     auctions_thread.start()
 
-    peer_udp_handling(client)
+    # Comentado para parar com o broadcast
+    #peer_udp_handling(client)
 
     #3. Launch the User Menu (Main Loop)
     peer_messaging(state, client)
-    await_new_peers_conn(state, client)
+
+    # Comentado porque já não se justifica
+    #await_new_peers_conn(state, client)
 
     # --- Cleanup ---
     print("[*] Shutting down peer.")

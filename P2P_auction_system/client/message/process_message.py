@@ -7,6 +7,7 @@ from client.message.auction.auction_end_handler import handle_auction_end
 from client.message.winner_reveal.winner_reveal_handler import handle_winner_reveal
 from client.message.winner_reveal.final_revelation import prepare_winner_identity, get_client_identity
 import time
+from client.ca_handler.ca_message import verify_timestamp_signature
 
 def is_auction_closed(auctions, auction_id):
     now = int(time.time())
@@ -76,10 +77,10 @@ def process_message(msg, client_state):
 
 
     mtype = obj.get("type")
-    
-    
+
     if mtype in message_types:
-        
+
+        # === 1. VERIFICAÇÃO DE TOKENS ===
         token_data = obj.get("token")
         if not token_data:
             print(f"[!] Message {mtype} rejected: No token.")
@@ -95,20 +96,33 @@ def process_message(msg, client_state):
         if verify_double_spending(token_id, client_state):
             print(f"[Security] ALERT: Attempted double spending (Token {token_id}). Ignored.")
             return
-        
+
+        # === 2. VERIFICAÇÃO DE TIMESTAMP ===
+        timestamp_data = obj.get("timestamp")
+
+        if not timestamp_data:
+            print(f"[Security] REJEITADO {mtype}: Mensagem sem Timestamp.")
+            return
+
+        # Verificar Assinatura da CA
+        if not verify_timestamp_signature(client_state.ca_pub_pem, timestamp_data):
+            print(f"[Security] AVISO: Assinatura da CA inválida no timestamp da mensagem {obj.get('id')}.")
+            return
+
         # == Auction Logic Messages
         if mtype in ("auction", "bid"):
 
             should_process = True
-    
+
             if mtype == "bid":
                 if is_auction_closed(client_state.auctions, obj.get('auction_id')):
-                    print(f"[X] Offer rejected. Time expired. ({int(time.time())})")
+                    current_sync_time = int(time.time() + client_state.time_offset)
+                    print(f"[X] Offer rejected. Time expired. ({current_sync_time})")
                     should_process = False
 
             if should_process:
                 if client_state.ledger.add_action(obj) == 1:
-                    client_state.ledger.save_to_file(client_state.user_path / "ledger.json") 
+                    client_state.ledger.save_to_file(client_state.user_path / "ledger.json")
                 update_personal_auctions(client_state, obj)
                 print(f"[✓] Stored {mtype} (id={obj.get('id')}) in ledger")
 
@@ -118,7 +132,7 @@ def process_message(msg, client_state):
 
         elif mtype == "winner_token_reveal":
             handle_winner_reveal(client_state, obj)
-        
+
         elif mtype == "auction_owner_revelation":
             prepare_winner_identity(client_state, obj)
 
@@ -133,20 +147,20 @@ def process_message(msg, client_state):
             if update_json:
                 c_update_json = encrypt_message_symmetric_gcm(update_json, client_state.group_key)
                 send_to_peers(c_update_json, client_state.peer.connections)
-        
+
         elif mtype == "ledger_update":
             if not client_state.ledger_request_id == 0:
                 print("Receive updated ledger!")
                 ledger_update_handler(client_state, obj)
-    
-    # == New key from CA
-    elif mtype == "new_key":
-       
-       keys = obj.get("encrypted_keys")
-       new_group_key = find_my_new_key(keys, client_state.private_key)
 
-       if not new_group_key == None:
-           client_state.group_key = new_group_key
+        # == New key from CA
+    elif mtype == "new_key":
+
+        keys = obj.get("encrypted_keys")
+        new_group_key = find_my_new_key(keys, client_state.private_key)
+
+        if not new_group_key == None:
+            client_state.group_key = new_group_key
 
     else:
         print(f"[?] Unknown message type received: {mtype}")

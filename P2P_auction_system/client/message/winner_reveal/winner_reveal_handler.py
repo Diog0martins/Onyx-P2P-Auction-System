@@ -4,6 +4,7 @@ import json
 from crypto.encoding.b64 import b64d, b64e
 from client.message.auction.auction_handler import add_winning_key
 from crypto.token.token_manager import verify_peer_blinding_data
+from client.ca_handler.ca_message import get_valid_timestamp
 
 def send_auction_creation_proof(client_state, auction_id, deal_key):
 
@@ -40,11 +41,14 @@ def send_auction_creation_proof(client_state, auction_id, deal_key):
                 print(f"[!] Unable to create Auction: {e}")
                 return None
 
+            timestamp = get_valid_timestamp()
+
             msg = {
                 "type": "auction_owner_revelation",
                 "auction_id": auction_id,
                 "token": token_data,
-                "private_info": private_payload
+                "private_info": private_payload,
+                "timestamp": timestamp
             }
 
             response_json = json.dumps(msg)

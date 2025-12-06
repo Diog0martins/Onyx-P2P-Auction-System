@@ -14,6 +14,9 @@ from client.message.auction.auction_handler import (
 from crypto.encoding.b64 import b64e
 from crypto.crypt_decrypt.hybrid import hybrid_encrypt
 
+from client.ca_handler.ca_message import get_valid_timestamp
+
+
 def cmd_bid(auction_id, bid, client):
 
     # Make sure auction exists
@@ -57,13 +60,16 @@ def cmd_bid(auction_id, bid, client):
 
     encrypted_identity_blob = hybrid_encrypt(identity_pkg, client.ca_pub_pem)
 
+    timestamp = get_valid_timestamp()
+
     bid_obj = {
         "id": bid_id,
         "type": "bid",
         "auction_id": auction_id,
         "bid": bid,
         "token": token_data,
-        "encrypted_identity": encrypted_identity_blob
+        "encrypted_identity": encrypted_identity_blob,
+        "timestamp": timestamp
     }
 
     from client.message.process_message import is_auction_closed
