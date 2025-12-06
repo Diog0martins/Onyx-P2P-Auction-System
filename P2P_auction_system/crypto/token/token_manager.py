@@ -162,6 +162,17 @@ class TokenManager:
                 pass
         return wallet
 
+    def is_token_owner(self, token_id: str) -> bool:
+
+        if not token_id:
+            return False
+            
+        wallet = self._load_wallet()
+        for entry in wallet:
+            if entry.get("token_id") == token_id:
+                return True
+        return False
+
     def get_blinding_factor_r(self, token_id: str) -> Optional[int]:
         wallet = self._load_wallet()
         

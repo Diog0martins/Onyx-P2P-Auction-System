@@ -54,7 +54,10 @@ def update_personal_auctions(client, msg):
 
 
 def process_message(msg, client_state):
-    
+    print("==========")
+    print(client_state.auctions)
+    print("==========")
+
     message_types = ["auction",
                      "bid", 
                      "ledger_request",
