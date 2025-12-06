@@ -14,7 +14,10 @@ def peer_information_share(host, port):
 
     return json.dumps(msg)
 
-def peer_discovery_broadcast(udp_socket: socket.socket, state: PeerState):
+def peer_discovery_broadcast(udp_socket: socket.socket, client):
+
+    state = client.peer
+
     msg = {
         "type": "peer_discovery",
         "peer_prof": "Yes"
@@ -47,7 +50,10 @@ def broadcast_message(s: socket.socket, state: PeerState, message: str):
     print("Finished broadcast!")
 
 
-def listen_for_messages(s: socket.socket, state: PeerState):
+def listen_for_messages(s: socket.socket, client):
+
+    state = client.peer
+
     print(f"[LISTENING] UDP messages on port {s.getsockname()[1]}")
 
     while True:
@@ -82,9 +88,7 @@ def listen_for_messages(s: socket.socket, state: PeerState):
                 print(f"     Peer {peer_host}:{peer_port} answered back, let's establish connection!")
                 state.discovered_peers.put((peer_host, peer_port))
 
-                
         except json.JSONDecodeError:
-            #not json just ignore
             pass
 
 # ======== ======== ========
@@ -94,7 +98,10 @@ def listen_for_messages(s: socket.socket, state: PeerState):
 
 # ======== UDP Handler ========
 
-def peer_udp_handling(state: PeerState):
+def peer_udp_handling(client):
+
+    state = client.peer
+
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     udp_socket.bind((state.host, state.udp_port))
@@ -102,12 +109,12 @@ def peer_udp_handling(state: PeerState):
     # Start UDP listener thread
     threading.Thread(
         target=listen_for_messages,
-        args=(udp_socket, state, ),
+        args=(udp_socket, client, ),
         daemon=True
     ).start()
 
     print("   Will Broadcast!")
-    peer_discovery_broadcast(udp_socket, state)
+    peer_discovery_broadcast(udp_socket, client)
 
     return udp_socket
 

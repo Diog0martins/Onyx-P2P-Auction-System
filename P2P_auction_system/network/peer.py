@@ -153,6 +153,8 @@ def run_peer(host, port, client):
     relay_thread.start()
     auctions_thread.start()
 
+    peer_udp_handling(client)
+
     # 3. Iniciar o Menu do Utilizador (Loop Principal)
     peer_messaging(state, client)
     await_new_peers_conn(state, client)
