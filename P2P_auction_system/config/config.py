@@ -12,8 +12,7 @@ def make_json_path(path):
     return new_path
 
 def parse_config_file(config_file):
-    # file = config_file + ".json"
-    # print(file)
+
     with open(CONFIG_DIR / config_file) as fp:
         content = json.load(fp)
 
@@ -24,5 +23,4 @@ def parse_config_file(config_file):
 
 def parse_config(config_path):
     config_file = make_json_path(config_path)
-    print(f"\nLoading config: {config_file}\n")
     return parse_config_file(config_file)

@@ -1,12 +1,13 @@
-import base64
 import sys
 import json
+import base64
 import requests
-
-from crypto.certificates.certificates import create_x509_csr
+from design.ui import UI
 from crypto.encoding.b64 import b64e, b64d
-from cryptography.hazmat.primitives import serialization, hashes
+from crypto.certificates.certificates import create_x509_csr
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import serialization, hashes
+
 
 # ----- CA information hard-coded -----
 CA_IP = "127.0.0.1"
@@ -15,14 +16,20 @@ CA_URL = f"http://{CA_IP}:{CA_PORT}"
 
 
 def connect_and_register_to_ca(client):
-
+    """
+    Connects to the CA, verifies health, and registers the client.
+    """
+    
     # 1) Health check
     try:
         health_resp = requests.get(f"{CA_URL}/health", timeout=3)
         health_resp.raise_for_status()
-        print(f"[CA] Health OK -> {health_resp.json()}")
+        
+        UI.step("CA Service Status", "ONLINE") 
+        
     except Exception as e:
-        print(f"[CA] Error contacting CA: {e}")
+        UI.error(f"CA unavailable at {CA_URL}")
+        UI.sub_info("Details", str(e))
         sys.exit(1)
 
     # 2) Use existing keys -> build X.509 CSR
@@ -30,11 +37,11 @@ def connect_and_register_to_ca(client):
         csr_pem = create_x509_csr(
             private_key=client.private_key,
             public_key=client.public_key,
-            common_name="AnonymousPeer",      # goes into CSR subject CN
+            common_name="AnonymousPeer",
             meta={"display_name": "P2P User"}
         )
     except Exception as e:
-        print(f"[Client] Failed to create certificate: {e}")
+        UI.error(f"Failed to create certificate CSR: {e}")
         sys.exit(1)
 
     payload = {
@@ -46,11 +53,11 @@ def connect_and_register_to_ca(client):
         resp = requests.post(f"{CA_URL}/register", json=payload, timeout=5)
         resp.raise_for_status()
     except Exception as e:
-        print(f"[CA] Error calling /register: {e}")
+        UI.error(f"Registration rejected by CA")
+        UI.sub_info("Reason", str(e))
         sys.exit(1)
 
     data = resp.json()
-    print(f"    [CA] Registration complete. UID = {data['uid']}")
 
     # 4) Return everything the CA gave back
     return {
@@ -60,6 +67,7 @@ def connect_and_register_to_ca(client):
         "group_key": b64d(data["group_key_b64"]),
         "token_quota": data["token_quota"],
     }
+
 
 def request_winner_reveal(client, token_id, encrypted_identity_blob):
     print(f"[Security] Requesting identity disclosure for the token: {token_id}...")

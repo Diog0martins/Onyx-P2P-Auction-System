@@ -27,7 +27,7 @@ def handle_auction_end(client_state, obj):
 
     closing_timestamp = info.get("closing_date")
     closing_dt = datetime.fromtimestamp(closing_timestamp)
-    print(f"\n--- 🔔 AUCTION CLOSING NOTICE ---")
+    print(f"\n--- AUCTION CLOSING NOTICE ---")
     print(f"AUCTION CLOSED: ID {auction_target}")
     print(f"Time to Close Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")

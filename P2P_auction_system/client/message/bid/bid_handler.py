@@ -79,14 +79,9 @@ def cmd_bid(auction_id, bid, client):
     else:
         update_auction_higher_bid(client.auctions, auction_id, bid, "True", token_data)    
 
-    # print()
     print(f"Bid created with ID {bid_id}")
 
     bid_json = json.dumps(bid_obj)
-
-    # print("JSON ready to broadcast:")
-    # print(bid_json)
-    # print()
 
     return bid_json
 

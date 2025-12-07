@@ -61,6 +61,7 @@ class Ledger:
     
     def add_action(self, action):
         self.current_actions.append(action)
+        
         if len(self.current_actions) == self.max_actions:
             self.finish_block()
             return 1
@@ -168,7 +169,7 @@ class Ledger:
         ledger = Ledger.__new__(Ledger)
         ledger.chain = chain
         ledger.current_actions = []
-        ledger.max_actions = 3
+        ledger.max_actions = 1
 
         return ledger
     

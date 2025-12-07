@@ -1,23 +1,18 @@
-import threading
 import sys
-import json, random
+import time
+import json
+import threading
+from design.ui import UI
+from datetime import datetime
+from network.tcp import  send_to_peers
+from config.config import parse_config
 from network.peer_state import PeerState
 from network.tcp import connect_to_relay
-from network.udp import peer_udp_handling
-from network.tcp import peer_tcp_handling, await_new_peers_conn
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
-from network.tcp import peer_tcp_handling, await_new_peers_conn, send_to_peers
-
-from client.ledger.ledger_handler import prepare_ledger_request
-
 from client.message.peer_input import peer_input, menu_user
-from config.config import parse_config
-from local_test import TEST
+from client.ledger.ledger_handler import prepare_ledger_request
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 
-import threading
-import time
-from datetime import datetime
-from cryptography.hazmat.primitives import serialization
+
 from client.ca_handler.ca_message import get_valid_timestamp
 
 def check_auctions(client_state):
@@ -40,7 +35,7 @@ def check_auctions(client_state):
             if closing_timestamp and now >= closing_timestamp and auction_data_list.get("finished") == False:
                 
                 closing_dt = datetime.fromtimestamp(closing_timestamp)
-                print(f"\n--- 🔔 AUCTION CLOSING NOTICE ---")
+                print(f"\n---AUCTION CLOSING NOTICE ---")
                 print(f"AUCTION CLOSED: ID {auction_id}")
                 print(f"Time to Close Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
                 print(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
@@ -113,16 +108,23 @@ def peer_messaging(state: PeerState, client):
     t.start()
     t.join()
 
+
 def run_peer(host, port, client):
-    #1. Load Relay configuration dynamically
+    # 1. Load Relay configuration dynamically
+    relay_host = "Unknown"
+    relay_port = 0
+    
     try:
         relay_host, relay_port = parse_config("configRelay")
-        print(f"[*] Relay configuration loaded: {relay_host}:{relay_port}")
     except Exception as e:
-        print(f"[!] Critical error: Unable to read 'config/configRelay/configRelay.json'.")
-        print(f"[!] Details: {e}")
+        UI.error(f"Relay config missing: {e}")
         sys.exit(1)
 
+    # 2. Setup Peer State
+    # (Assuming PeerState and TEST are defined in your imports or global scope)
+    # If TEST is not defined globally, ensure it is passed or imported
+    TEST = 0 # Defaulting if not present in snippet
+    
     if TEST == 1:
         state = PeerState(host, port)
     else:
@@ -130,8 +132,16 @@ def run_peer(host, port, client):
 
     client.peer = state
 
-    # 2. Start persistent connection to Relay
-    # Replaces the old udp_socket and tcp_socket
+    # UI PRINT - The final step of the tree
+    UI.end_step("P2P Relay Connection", "ESTABLISHED")
+    # print(f"    Target: {relay_host}:{relay_port}") # Optional extra detail
+
+    # ---------------------------------------------------------
+    # FROM HERE ON: We stop the "Tree" visuals because threads
+    # will start printing asynchronous logs.
+    # ---------------------------------------------------------
+
+    # 3. Start persistent connection to Relay
     relay_thread = threading.Thread(
         target=connect_to_relay,
         args=(state, relay_host, relay_port, client),
@@ -147,17 +157,12 @@ def run_peer(host, port, client):
     relay_thread.start()
     auctions_thread.start()
 
-    # Comentado para parar com o broadcast
-    #peer_udp_handling(client)
-
-    #3. Launch the User Menu (Main Loop)
+    # 4. Launch the User Menu (Main Loop)
+    # The banner and tree are done. Now the messaging interface takes over.
     peer_messaging(state, client)
 
-    # Comentado porque já não se justifica
-    #await_new_peers_conn(state, client)
-
     # --- Cleanup ---
-    print("[*] Shutting down peer.")
+    print("\n[*] Shutting down peer.")
     state.stop_event.set()
 
     for c in state.connections:

@@ -65,12 +65,11 @@ def peer_input(client_state):
         print("Unknown command.")
         return None
 
-    try:
-        ledger_action = json.loads(msg)
-        if client_state.ledger.add_action(ledger_action) == 1:
-            client_state.ledger.save_to_file(client_state.user_path / "ledger.json")
-    except:
-        pass
+
+    ledger_action = json.loads(msg)
+    if client_state.ledger.add_action(ledger_action) == 1:
+        print("Save in the ledger after sending message!")
+        client_state.ledger.save_to_file(client_state.user_path / "ledger.json")
 
 
     return msg

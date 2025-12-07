@@ -1,5 +1,5 @@
 import json
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm, encrypt_with_public_key
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 from client.ledger.ledger_handler import load_public_ledger, ledger_request_handler, ledger_update_handler
 from crypto.keys.group_keys import find_my_new_key
 from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
@@ -55,9 +55,6 @@ def update_personal_auctions(client, msg):
 
 
 def process_message(msg, client_state):
-    print("==========")
-    print(client_state.auctions)
-    print("==========")
 
     message_types = ["auction",
                      "bid", 
@@ -129,6 +126,8 @@ def process_message(msg, client_state):
         # == End of Auction Related Messages
         elif mtype == "auctionEnd":
             handle_auction_end(client_state, obj)
+            if client_state.ledger.add_action(obj) == 1:
+                client_state.ledger.save_to_file(client_state.user_path / "ledger.json")
 
         elif mtype == "winner_token_reveal":
             handle_winner_reveal(client_state, obj)
@@ -153,7 +152,7 @@ def process_message(msg, client_state):
                 print("Receive updated ledger!")
                 ledger_update_handler(client_state, obj)
 
-        # == New key from CA
+    # == New key from CA
     elif mtype == "new_key":
 
         keys = obj.get("encrypted_keys")

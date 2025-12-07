@@ -2,8 +2,7 @@ import json
 import secrets
 
 from crypto.keys.keys_crypto import generate_key_pair
-from datetime import datetime, timedelta, timezone # Módulos de data/hora
-import time # Para timestamp Unix
+from datetime import datetime, timedelta, timezone 
 
 from client.ca_handler.ca_message import get_valid_timestamp
 
@@ -11,7 +10,7 @@ from crypto.crypt_decrypt.hybrid import hybrid_encrypt
 
 from crypto.encoding.b64 import b64e
 
-AUCTION_DURATION_SECONDS = 10
+AUCTION_DURATION_SECONDS = 60
 
 def cmd_auction(client, name, bid):
     try:
@@ -54,15 +53,10 @@ def cmd_auction(client, name, bid):
 
     add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp, token_data, public_key_str)
 
-    # print()
     print(f"Auction created with ID {auction_id}")
 
     # JSON ready to send
     auction_json = json.dumps(auction_obj)
-
-    # print("JSON ready to broadcast:")
-    # print(auction_json)
-    # print()
 
     return auction_json
 
@@ -122,7 +116,6 @@ def generate_next_auction_id(auctions):
 
 
 def check_auction_existence(auctions, auction_id):
-    # print(auctions)
     return auction_id in auctions.get("auction_list", {})
 
 def add_winning_key(auctions_data, auction_id, crypto_key):
