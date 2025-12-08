@@ -16,7 +16,7 @@ from crypto.encoding.b64 import b64e
 from crypto.certificates.certificates import make_x509_certificate, verify_csr
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 from crypto.crypt_decrypt.hybrid import hybrid_decrypt
-
+from crypto.crypt_decrypt.crypt import encrypt_with_public_key
 from crypto.keys.keys_crypto import get_pub_bytes
 
 from ca.ca_api.BlindTokens import BlindSignReq
@@ -30,6 +30,7 @@ from pydantic import BaseModel
 # FastAPI Service Instance
 app = FastAPI(title="Auction CA", version="1.0.0")
 
+app.state.PEER_SESSIONS = {}
 
 # Simple ‘health’ endpoint for monitoring check
 @app.get("/health")
@@ -70,11 +71,12 @@ def register(req: RegisterReq, request: Request):
     )
 
     # 4 — store PEM cert in DB
+    user_pub_bytes = get_pub_bytes(csr.public_key())
     store_user(
         request.app.state.DB_PATH,
         uid,
         req,
-        get_pub_bytes(csr.public_key()),
+        user_pub_bytes,
         cert_pem
     )
 
@@ -83,14 +85,25 @@ def register(req: RegisterReq, request: Request):
         group_key = generate_aes_key()
         app.state.KEY_GROUP_BOOL = True
         app.state.KEY_GROUP = group_key
-        
 
-    # 6 — return cert + CA public key + pub_key_group
+    session_key = generate_aes_key()
+
+    request.app.state.PEER_SESSIONS[uid] = session_key
+
+    secrets_json = json.dumps({
+        "group_key": b64e(request.app.state.KEY_GROUP),
+        "session_key": b64e(session_key)
+    })
+
+    user_pub_pem = b64e(user_pub_bytes)
+    encrypted_blob = encrypt_with_public_key(secrets_json.encode('utf-8'), user_pub_bytes)
+
+    # 6 — Return seguro
     return RegisterResp(
         uid=uid,
         cert_pem_b64=b64e(cert_pem),
         ca_pub_pem_b64=b64e(get_pub_bytes(request.app.state.CA_VK)),
-        group_key_b64=b64e(request.app.state.KEY_GROUP),
+        encrypted_secrets_b64=b64e(encrypted_blob),  # <--- CAMPO SEGURO
         token_quota=0
     )
 

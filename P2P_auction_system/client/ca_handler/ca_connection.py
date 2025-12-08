@@ -5,6 +5,7 @@ import requests
 from design.ui import UI
 from crypto.encoding.b64 import b64e, b64d
 from crypto.certificates.certificates import create_x509_csr
+from crypto.crypt_decrypt.decrypt import decrypt_with_private_key
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization, hashes
 
@@ -59,15 +60,36 @@ def connect_and_register_to_ca(client):
 
     data = resp.json()
 
-    # 4) Return everything the CA gave back
+    try:
+        encrypted_blob = b64d(data["encrypted_secrets_b64"])
+
+        private_key_pem = client.private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+
+        decrypted_json_bytes = decrypt_with_private_key(encrypted_blob, private_key_pem)
+        secrets = json.loads(decrypted_json_bytes.decode('utf-8'))
+
+        group_key = b64d(secrets["group_key"])
+        session_key = b64d(secrets["session_key"])
+
+        client.ca_session_key = session_key
+
+        UI.step("Secure Channel", "ESTABLISHED")
+
+    except Exception as e:
+        UI.error(f"Failed to decrypt CA secrets: {e}")
+        sys.exit(1)
+
     return {
         "uid": data["uid"],
         "cert_pem": b64d(data["cert_pem_b64"]),
         "ca_pub_pem": b64d(data["ca_pub_pem_b64"]),
-        "group_key": b64d(data["group_key_b64"]),
+        "group_key": group_key,
         "token_quota": data["token_quota"],
     }
-
 
 def request_winner_reveal(client, token_id, encrypted_identity_blob):
     print(f"[Security] Requesting identity disclosure for the token: {token_id}...")

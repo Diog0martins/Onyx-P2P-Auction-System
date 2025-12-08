@@ -7,6 +7,7 @@ class Client:
         self.cert_pem = None
         self.ca_pub_pem = None
         self.group_key = None
+        self.ca_session_key = None
         self.token_manager = None
         self.ledger_request_id = None
         self.ledger = None

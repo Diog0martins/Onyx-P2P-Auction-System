@@ -11,5 +11,5 @@ class RegisterResp(BaseModel):
     uid: str
     cert_pem_b64: str
     ca_pub_pem_b64: str
-    group_key_b64: str
+    encrypted_secrets_b64: str
     token_quota: int
