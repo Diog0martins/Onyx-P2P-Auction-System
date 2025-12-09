@@ -2,15 +2,11 @@ import os
 import sys
 import uvicorn
 from pathlib import Path
-
-from config.config import parse_config_file
 from local_test import TEST
-
 from ca.ca_db import init_db
 from ca.ca_api.ca_api import app
 from network.ip import get_ip
-from design.ui import UI
-
+from config.config import parse_config_file
 from crypto.keys.keys_handler import prepare_key_pair_generation
 
 
