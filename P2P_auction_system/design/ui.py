@@ -2,8 +2,17 @@ import time
 from datetime import datetime
 
 class UI:
+    """
+    A static utility class for handling console output with rich formatting, ANSI colors, 
+    and structured logging levels.
+    
+    This class provides a standardized interface for the application to print messages,
+    ensuring consistency in how peers, security alerts, and system status are displayed to the user.
+    """
     
     # --- ANSI Colors ---
+    # These escape sequences tell the terminal to change text color.
+    # \033[0m resets all attributes (color, bold, etc.) to default.
     RESET   = "\033[0m"
     BOLD    = "\033[1m"
     GREY    = "\033[90m"
@@ -23,6 +32,10 @@ class UI:
     
     @staticmethod
     def banner():
+        """
+        Clears the terminal screen and displays the application ASCII logo.
+        """
+        # \033[2J clears the entire screen, \033[H moves cursor to top-left
         print("\033[2J\033[H")
         print(f"{UI.CYAN}")
         print(r"""
@@ -38,27 +51,47 @@ class UI:
 
     @staticmethod
     def step(message, status="OK", color=GREEN):
+        """
+        Prints a structured checklist item during the startup sequence.
+        Format: ├── Message .............. [STATUS]
+        """
+        # :<40 ensures the message is padded to 40 characters for alignment
         print(f" ├── {message:<40} [{color}{status}{UI.RESET}]")
-        time.sleep(0.05)
+        time.sleep(0.05) # Add a tiny delay for a "loading" effect
 
     def sys_ready():
+        """
+        Announces that the initialization is complete and the CLI loop is starting.
+        """
         print(f"\n{UI.BOLD}>>> System Ready. Entering Command Mode...{UI.RESET}\n")
 
 
     @staticmethod
     def sub_step(key, value):
+        """
+        Prints details for a specific step, indented to show hierarchy.
+        """
         print(f" │   └── {UI.GREY}{key}: {UI.RESET}{value}")
 
     @staticmethod
     def end_step(message, status="DONE"):
+        """
+        Marks the completion of a major process block (visually closing the tree).
+        """
         print(f" └── {message:<40} [{UI.GREEN}{status}{UI.RESET}]")
 
     @staticmethod
     def setup_error(message):
+        """
+        Special error handler for critical failures during the setup phase.
+        """
         print(f" └── {UI.RED}ERROR: {message}{UI.RESET}")
 
     @staticmethod
     def help():
+        """
+        Displays the available commands and their syntax to the user.
+        """
         CMD = UI.BOLD + UI.CYAN
         ARG = UI.RESET + UI.GREY
         print(f"\n{UI.BOLD}   COMMAND SYNTAX{UI.RESET}")
@@ -75,16 +108,21 @@ class UI:
 
     @staticmethod
     def _timestamp():
+        """Generates a timestamp string if enabled in config."""
         if not UI.SHOW_TIME: return ""
         now = datetime.now().strftime("%H:%M:%S")
         return f"{UI.GREY}[{now}]{UI.RESET} "
 
     @staticmethod
     def _log(tag, color, message):
-        """Prints the main header line: [TIME] [TAG] Message"""
+        """
+        Internal helper: Prints a main header line with a colored tag.
+        Format: [TIME] [TAG] Message
+        """
         ts = UI._timestamp()
         print(f"{ts}{UI.BOLD}{color}[{tag}]{UI.RESET} {message}")
 
+    # Wrappers for specific log types to enforce consistent color coding
     @staticmethod
     def peer(msg):
         UI._log("PEER", UI.GREEN, msg)
@@ -123,11 +161,15 @@ class UI:
 
     @staticmethod
     def _sub(color, message):
-        """Prints an indented branch: [TIME]    └── Message"""
+        """
+        Internal helper: Prints an indented detail line connected to the previous log.
+        Format: [TIME]    └── Message
+        """
         ts = UI._timestamp()
-        # The └── symbol takes the color of the context
+        # The └── symbol visually connects this line to the parent log above it
         print(f"{ts}   {color}└──{UI.RESET} {message}")
 
+    # Wrappers for specific sub-log types matching the parent colors
     @staticmethod
     def sub_peer(msg):
         UI._sub(UI.GREEN, msg)
