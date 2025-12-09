@@ -3,6 +3,7 @@ import json
 from fastapi import FastAPI, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone, timedelta
+from pydantic import BaseModel
 
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -11,21 +12,13 @@ from ca.ca_utils.time import now_iso
 from ca.ca_db import get_db, store_user, user_exists, insert_token, increment_token_quota, remove_user_and_get_remaining_pubkeys
 from ca.ca_api.Register import RegisterReq, RegisterResp
 from ca.ca_api.Tokens import TokensReq, TokensResp
-
-from crypto.encoding.b64 import b64e
-from crypto.certificates.certificates import make_x509_certificate, verify_csr
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
-from crypto.crypt_decrypt.hybrid import hybrid_decrypt
-from crypto.crypt_decrypt.crypt import encrypt_with_public_key
-from crypto.keys.keys_crypto import get_pub_bytes
-
 from ca.ca_api.BlindTokens import BlindSignReq
+
+from crypto.certificates.certificates import make_x509_certificate, verify_csr
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm, encrypt_with_public_key
+from crypto.crypt_decrypt.hybrid import hybrid_decrypt
+from crypto.keys.keys_crypto import get_pub_bytes, generate_aes_key
 from crypto.encoding.b64 import b64e, b64d
-
-from crypto.keys.keys_crypto import generate_aes_key
-
-from pydantic import BaseModel
-
 
 # FastAPI Service Instance
 app = FastAPI(title="Auction CA", version="1.0.0")

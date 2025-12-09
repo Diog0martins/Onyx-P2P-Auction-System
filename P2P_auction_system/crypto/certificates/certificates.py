@@ -9,7 +9,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 
 from crypto.encoding.b64 import b64d
 
-
 # Still useful for signing internal metadata (not X.509)
 def canonical_bytes(obj: dict) -> bytes:
     return json.dumps(obj, sort_keys=True, separators=(",", ":")).encode("utf-8")

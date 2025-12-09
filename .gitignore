@@ -46,24 +46,23 @@ coverage.xml
 # Others
 .DS_Store
 Thumbs.db
-
-config/*
-!config/config.py
-!config/**/
-!config/**/config*.json
-
 repomix-output.xml
 
-# Public keys
-**/public_key.pem
+# ==========================
+#   PROJECT SPECIFIC RULES
+# ==========================
 
-# Private keys
-**/private_key.pem
-
-# CA database
+# 1. Ignorar Base de Dados da CA
 P2P_auction_system/ca/ca.db
 
-# User ledgers
-P2P_auction_system/config/**/user/ledger.json
-P2P_auction_system/config/**/user/token_wallet.json
+# 2. Ignorar chaves
+**/*.pem
 
+# 3. Regra Geral para pastas 'user'
+# Isto impede o upload das pastas 'user' dentro de config1, config2, configRelay, etc.
+P2P_auction_system/config/*/user/
+
+# 4. Regras Específicas para configCA
+# Ignora tudo dentro de configCA ... exceto o ficheiro de configuração json
+P2P_auction_system/config/configCA/*
+!P2P_auction_system/config/configCA/configCA.json

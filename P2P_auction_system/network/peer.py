@@ -5,15 +5,13 @@ import threading
 from design.ui import UI
 from local_test import TEST
 from datetime import datetime
-from network.tcp import send_to_peers
+from network.tcp import send_to_peers, connect_to_relay
 from config.config import parse_config
 from network.peer_state import PeerState
-from network.tcp import connect_to_relay
 from client.message.peer_input import peer_input, menu_user
 from client.ca_handler.ca_message import get_valid_timestamp
 from client.ledger.ledger_handler import prepare_ledger_request
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
-
 
 def check_auctions(client_state):
 

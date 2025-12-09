@@ -18,11 +18,16 @@
 
 ## 🛠️ Installation
 
+### Prerequisites
+* **Python 3.12+**: This system relies on features introduced in Python 3.12. Please ensure you have this version or newer installed.
+
+### Steps
+
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/Diog0martins/Peer-to-Peer-Privacy-Preserving-Auction-System
-    cd Peer-to-Peer-Privacy-Preserving-Auction-System
+    git clone git@github.com:Diog0martins/Onyx-P2P-Auction-System.git
+    cd Onyx-P2P-Auction-System
     ```
 
 -----
