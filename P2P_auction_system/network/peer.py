@@ -3,6 +3,7 @@ import time
 import json
 import threading
 from design.ui import UI
+from local_test import TEST
 from datetime import datetime
 from network.tcp import send_to_peers
 from config.config import parse_config
@@ -118,7 +119,11 @@ def run_peer(host, port, client):
     relay_port = 0
     
     try:
-        relay_host, relay_port = parse_config("configRelay")
+        if TEST == 1:
+            relay_host, relay_port = parse_config("configRelay")
+        else:
+            relay_host = ""
+            relay_port = 7000
     except Exception as e:
         UI.error(f"Relay config missing: {e}")
         sys.exit(1)

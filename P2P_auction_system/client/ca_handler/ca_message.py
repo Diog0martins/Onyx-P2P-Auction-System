@@ -2,11 +2,7 @@ import base64
 import requests
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-
-
-CA_IP = "127.0.0.1"
-CA_PORT = 8443
-CA_URL = f"http://{CA_IP}:{CA_PORT}"
+from client.ca_handler.ca_info import CA_URL
 
 
 def get_valid_timestamp(delta_seconds=None):

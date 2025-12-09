@@ -4,7 +4,10 @@ import sys
 import json
 import time
 from pathlib import Path
+from local_test import TEST
 
+from design.ui import UI
+from network.ip import get_ip
 from config.config import parse_config
 from client.client_state import Client
 from client.ca_handler.ca_connection import connect_and_register_to_ca
@@ -131,11 +134,17 @@ def main():
     config_path = Path("config") / config_name
     user_path = config_path / "user"
 
-    try:
-        host, port = parse_config(config_name)
-    except Exception as e:
-        print(f"[Relay] Error reading config: {e}")
-        sys.exit(1)
+    if TEST == 1:
+        try:
+            host, port = parse_config(config_name)
+        except Exception as e:
+            print(f"[Relay] Error reading config: {e}")
+            sys.exit(1)
+    else:
+        host = get_ip()
+        port = 7000 
+
+
 
     if not user_path.exists():
         user_path.mkdir(parents=True, exist_ok=True)

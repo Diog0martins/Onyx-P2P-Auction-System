@@ -8,12 +8,9 @@ from crypto.certificates.certificates import create_x509_csr
 from crypto.crypt_decrypt.decrypt import decrypt_with_private_key
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization, hashes
-
+from client.ca_handler.ca_info import CA_URL
 
 # ----- CA information hard-coded -----
-CA_IP = "127.0.0.1"
-CA_PORT = 8443
-CA_URL = f"http://{CA_IP}:{CA_PORT}"
 
 
 def connect_and_register_to_ca(client):
