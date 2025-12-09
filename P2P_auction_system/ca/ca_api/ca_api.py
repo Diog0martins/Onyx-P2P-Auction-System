@@ -20,22 +20,26 @@ from crypto.crypt_decrypt.hybrid import hybrid_decrypt
 from crypto.keys.keys_crypto import get_pub_bytes, generate_aes_key
 from crypto.encoding.b64 import b64e, b64d
 
-# FastAPI Service Instance
 app = FastAPI(title="Auction CA", version="1.0.0")
 
 app.state.PEER_SESSIONS = {}
 
-# Simple ‘health’ endpoint for monitoring check
 @app.get("/health")
 def health():
+    """
+        Performs a basic health check of the Certificate Authority service.
+        Returns the current server status and timestamp to ensure availability.
+    """
 
     return {"status": "ok", "time": now_iso()}
 
-
-
-# Exposes b64 encoded CA public key
 @app.get("/ca_pub")
 def ca_pub(request: Request):
+    """
+        Exposes the Certificate Authority's Public Key.
+        Clients use this key to verify signatures (on certificates and timestamps)
+        and to encrypt identity packages sent to the CA.
+    """
     
     ca_vk = request.app.state.CA_VK
     ca_pub_bytes = get_pub_bytes(ca_vk)
@@ -43,10 +47,16 @@ def ca_pub(request: Request):
     return {"ca_pub": b64e(ca_pub_bytes)}
 
 
-
-# Validates UserCertificate, generates uuid and signs certificate
 @app.post("/register", response_model=RegisterResp)
 def register(req: RegisterReq, request: Request):
+    """
+        Handles the registration of a new peer in the network.
+        1. Verifies the client's Certificate Signing Request (CSR).
+        2. Issues a signed X.509 Certificate.
+        3. Generates a unique UID for the user.
+        4. Establishes a session key and distributes the current Group Key,
+           encrypted using the user's public key (Hybrid Encryption).
+    """
 
     # 1 — decode & verify CSR
     try:
@@ -101,15 +111,12 @@ def register(req: RegisterReq, request: Request):
     )
 
 
-
-
-
-# Verify if uuid exists and generates count UUIDs, increments UserID token counting
-# What should do:
-# - send signed blinded token
-# - send timestamp and signature
 @app.post("/tokens", response_model=TokensResp)
 def issue_tokens(req: TokensReq, request: Request):
+    """
+        Issues quota for anonymous tokens to a registered user.
+        Verifies the UID exists in the database and increments the user's token usage count.
+    """
 
     conn = get_db(request.app.state.DB_PATH)
     
@@ -131,6 +138,11 @@ def issue_tokens(req: TokensReq, request: Request):
 
 @app.post("/blind_sign")
 def blind_sign(req: BlindSignReq, request: Request):
+    """
+        Performs RSA Blind Signing.
+        The CA signs a blinded hash provided by the user without seeing the original content.
+        This allows the user to later unblind the signature and use it as a valid, anonymous token.
+    """
 
     # 1. Verify that the UID exists
     conn = get_db(request.app.state.DB_PATH)
@@ -160,6 +172,12 @@ def blind_sign(req: BlindSignReq, request: Request):
 
 @app.get("/timestamp")
 def timestamp(request: Request, delta: Optional[int] = None):
+    """
+        Generates a cryptographically signed timestamp using the CA's private key.
+        Used by clients to prove the time of events (like bids) and prevent replay attacks.
+        Supports an optional 'delta' to generate future timestamps.
+    """
+
     # 1. Calcular o tempo
     now = datetime.now(timezone.utc)
 
@@ -193,6 +211,12 @@ def timestamp(request: Request, delta: Optional[int] = None):
 
 @app.post("/leave")
 def leave_network(req: dict, request: Request):
+    """
+        Handles a user's request to leave the network.
+        1. Removes the user from the database.
+        2. Triggers a Group Key Rotation (Forward Secrecy).
+        3. Encrypts the new Group Key individually for all remaining users.
+    """
 
     uid = req["uid"]
     
@@ -250,6 +274,13 @@ class RevealReq(BaseModel):
 
 @app.post("/reveal_identity")
 def reveal_identity(req: RevealReq, request: Request):
+    """
+        Decrypts an 'Identity Package' to resolve disputes.
+        Uses the CA's private key to open the package (Hybrid Decryption), verifying
+        if a specific token belongs to a specific Real UID.
+        Returns a signed receipt of the revelation.
+    """
+
     ca_sk = request.app.state.CA_SK
 
     identity_pkg = hybrid_decrypt(req.encrypted_identity, ca_sk)

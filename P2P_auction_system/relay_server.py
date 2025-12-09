@@ -17,11 +17,24 @@ STOP_EVENT = threading.Event()
 RELAY_GROUP_KEY = None
 
 def peer_left(uuid):
+    """
+        Helper function that prepares a formatted message to notify the network
+        that a specific peer (UUID) has disconnected.
+    """
+
     message = leave_network(uuid)
     return (message+'\n').encode()
 
 
 def handle_client(conn, addr):
+    """
+        Manages a single client connection on the Relay Server.
+        1. Registers the client's UUID.
+        2. Receives encrypted messages.
+        3. Broadcasts the received message to ALL other connected clients (Echo/Relay pattern).
+        4. Handles cleanup and notification when a client disconnects.
+    """
+
     print(f"[Relay] Peer conected: {addr}")
     
     user_uuid = "NA"
@@ -87,6 +100,11 @@ def handle_client(conn, addr):
 
 
 def start_relay_server(host, port):
+    """
+        Starts the TCP server for the Relay.
+        Listens for incoming peer connections and spawns a "handle_client" thread for each one.
+    """
+
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -125,6 +143,14 @@ def start_relay_server(host, port):
 
 
 def main():
+    """
+        Entry point for the Relay Server.
+        1. Loads configuration.
+        2. Generates its own identity keys.
+        3. Registers with the CA to obtain the Group Key.
+        4. Starts the server loop.
+    """
+
     global RELAY_GROUP_KEY
     config_name = "configRelay"
     config_path = Path("config") / config_name

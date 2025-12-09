@@ -11,6 +11,11 @@ from crypto.keys.keys_handler import prepare_key_pair_generation
 
 
 def prepare_ca(ca_path, db_path):
+    """
+        Prepares the CA environment by loading (or generating) the CA's
+        RSA key pair and initializing the database structure.
+    """
+
     ca_path = Path(ca_path)
     ca_sk, ca_vk = prepare_key_pair_generation(ca_path)
     init_db(db_path)
@@ -19,7 +24,12 @@ def prepare_ca(ca_path, db_path):
 
 
 def run_ca():
-    
+    """
+        Entry point for the CA Service.
+        Configures the FastAPI application state with keys and database paths,
+        determines the host IP, and starts the Uvicorn web server.
+    """
+
     if TEST == 1:
         # print(f"[CA] TEST != 1 (TEST={TEST}). CA will not start in this mode.")
         # sys.exit(0)

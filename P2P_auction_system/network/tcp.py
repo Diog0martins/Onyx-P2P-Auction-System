@@ -8,6 +8,12 @@ from crypto.crypt_decrypt.decrypt import decrypt_message_symmetric_gcm
 # ======== TCP Utilities ========
 
 def send_to_peers(msg, connections):
+    """
+        Broadcasts a message to a list of active TCP connections.
+        Appends a newline character as a delimiter to ensure proper message framing.
+        Handles disconnected sockets by removing them from the list.
+    """
+
     for conn in connections[:]:
         try:
             conn.sendall((msg + "\n").encode('utf-8'))
@@ -20,6 +26,14 @@ def send_to_peers(msg, connections):
                 pass
 
 def handle_connection(conn, addr, client_state):
+    """
+        The main TCP listener loop for a specific connection.
+        1. Reads raw bytes from the socket into a buffer.
+        2. Handles TCP fragmentation by processing data only when a newline delimiter is found.
+        3. Decrypts incoming messages using the Group Key (AES-GCM).
+        4. Passes the valid message to the application logic (process_message).
+    """
+
     UI.success(f"Connected: {addr}")
 
     buffer = b""
@@ -80,6 +94,11 @@ def handle_connection(conn, addr, client_state):
         pass
 
 def accept_incoming(listener, connections, client_state):
+    """
+        Background thread loop that accepts new incoming TCP connections
+        and spawns a handler thread for each one.
+    """
+
     while True:
         try:
             conn, addr = listener.accept()
@@ -94,11 +113,17 @@ def accept_incoming(listener, connections, client_state):
 
 
 def await_new_peers_conn(state: PeerState, client_state):
+    """Legacy function reserved for future P2P direct connection logic (currently unused)."""
     pass
 
 # ======== TCP Handler ========
 
 def peer_tcp_handling(client_state):
+    """
+        Sets up the local TCP server socket to listen for incoming connections.
+        Starts the "accept_incoming" thread.
+    """
+
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listener.bind((client_state.peer.host, client_state.peer.port))
@@ -116,6 +141,12 @@ def peer_tcp_handling(client_state):
 
 
 def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
+    """
+        Maintains a persistent outbound connection to the Relay Server.
+        Includes logic for automatic reconnection (retry mechanism) if the connection is lost.
+        Sends the client's UUID upon successful connection for identification.
+    """
+
     UI.sys(f"Connecting to RELAY at {relay_host}:{relay_port}...")
 
     while not state.stop_event.is_set():

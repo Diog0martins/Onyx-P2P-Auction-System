@@ -5,12 +5,16 @@ from ca.ca_utils.time import now_iso
 # ====== Token Related Queries ======
 
 def user_exists(conn, uid: str) -> bool:
+    """Checks if a specific User ID exists in the database."""
+
     cur = conn.cursor()
     row = cur.execute("SELECT uid FROM users WHERE uid=?", (uid,)).fetchone()
     return row is not None
 
 
 def insert_token(conn, uid: str) -> str:
+    """Records the issuance of a new token ID for a specific user in the database."""
+
     cur = conn.cursor()
     tid = str(uuid.uuid4())
     cur.execute(
@@ -21,6 +25,8 @@ def insert_token(conn, uid: str) -> str:
 
 
 def increment_token_quota(conn, uid: str, amount: int):
+    """Updates the count of tokens issued to a specific user (quota management)."""
+
     cur = conn.cursor()
     cur.execute(
         "UPDATE users SET token_quota = token_quota + ? WHERE uid=?",
@@ -33,6 +39,11 @@ def increment_token_quota(conn, uid: str, amount: int):
 # ====== User Related Queries ======
 
 def store_user(db_path, uid, req, csr_pem: bytes, cert_pem: bytes):
+    """
+        Saves a new user's cryptographic identity (UID, Public Key, Certificate)
+        into the 'users' table upon registration.
+    """
+
     conn = get_db(db_path)
     cur = conn.cursor()
     cur.execute(
@@ -49,6 +60,12 @@ def store_user(db_path, uid, req, csr_pem: bytes, cert_pem: bytes):
 
 
 def remove_user_and_get_remaining_pubkeys(conn, uid: str):
+    """
+        Removes a user from the database and returns the Public Keys of all
+        remaining users. This is essential for re-encrypting the Group Key
+        during key rotation.
+    """
+
     cur = conn.cursor()
     
     cur.execute("DELETE FROM users WHERE uid=?", (uid,))
@@ -69,12 +86,19 @@ def remove_user_and_get_remaining_pubkeys(conn, uid: str):
 
 # Creates a connection to ca.db
 def get_db(db_path):
+    """Establishes and returns a connection to the SQLite database."""
+
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
 # Create the tables if they do not exist
 def init_db(db_path):
+    """
+        Initializes the database schema.
+        Creates the 'users' and 'tokens' tables if they do not already exist.
+    """
+
     conn = get_db(db_path)
     cur = conn.cursor()
     cur.execute("""
