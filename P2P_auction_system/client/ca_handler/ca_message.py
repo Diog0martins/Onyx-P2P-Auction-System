@@ -1,8 +1,8 @@
-import requests, json
-from crypto.encoding.b64 import b64d
+import base64
+import requests
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-import base64
+
 
 CA_IP = "127.0.0.1"
 CA_PORT = 8443

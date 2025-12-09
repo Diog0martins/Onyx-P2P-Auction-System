@@ -1,6 +1,7 @@
 import json
 import datetime
 from cryptography import x509
+from design.ui import UI
 from cryptography.x509.oid import NameOID
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
@@ -123,32 +124,40 @@ def verify_certificate(cert_pem_b64: str, ca_pub: rsa.RSAPublicKey) -> bool:
 def inspect_certificate(cert_raw):
     # 1. Handle input types: convert PEM bytes to an Object if needed
     if isinstance(cert_raw, bytes):
-        cert = x509.load_pem_x509_certificate(cert_raw)
+        try:
+            cert = x509.load_pem_x509_certificate(cert_raw)
+        except Exception:
+            UI.error("   [!] Invalid Certificate Format")
+            return
     else:
         cert = cert_raw
-
-    print(f"{'='*10} CERTIFICATE DETAILS {'='*10}")
-
+    print()
+    print("         " + "="*35)
+    
     # 2. Extract Common Name (CN) specifically for readability
     try:
         subject_cn = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
     except IndexError:
         subject_cn = "No Common Name"
 
-    print(f"Subject CN:   {subject_cn}")
+    print(f"         Subject CN:   {subject_cn}")
     
     # 3. Print Full Subject and Issuer strings
-    print(f"Full Subject: {cert.subject.rfc4514_string()}")
-    print(f"Issuer:       {cert.issuer.rfc4514_string()}")
+    subj_str = cert.subject.rfc4514_string()
+    print(f"         Full Subject: {subj_str}")
     
-    # 5. Serial Number (in Hex for readability)
-    print(f"Serial No:    {hex(cert.serial_number)}")
+    issuer_str = cert.issuer.rfc4514_string()
+    print(f"         Issuer:       {issuer_str}")
+    
+    # 4. Serial Number
+    print(f"         Serial No:    {hex(cert.serial_number)}")
 
-    # 6. Subject Alternative Names (SANs) - Crucial for web servers
+    # 5. Subject Alternative Names (SANs)
     try:
         san_ext = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-        print(f"SANs:         {san_ext.value}")
+        print(f"         SANs:         {san_ext.value}")
     except x509.ExtensionNotFound:
-        print("SANs:         None")
+        print("         SANs:         None")
 
-    print("="*40)
+    print("         " + "="*35)
+    print()

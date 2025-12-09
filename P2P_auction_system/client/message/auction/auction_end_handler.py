@@ -1,17 +1,15 @@
-import secrets
-
-from cryptography.hazmat.primitives import serialization
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm, encrypt_with_public_key
-from datetime import datetime
 import json
 import time
-import client
+import secrets
+from design.ui import UI
+from datetime import datetime
 from crypto.encoding.b64 import b64e
 from crypto.keys.keys_crypto import generate_aes_key
-from client.message.auction.auction_handler import add_winning_key
-
-from client.ca_handler.ca_message import get_valid_timestamp
 from crypto.crypt_decrypt.hybrid import hybrid_encrypt
+from client.ca_handler.ca_message import get_valid_timestamp
+from client.message.auction.auction_handler import add_winning_key
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm, encrypt_with_public_key
+
 
 def handle_auction_end(client_state, obj):
     from network.tcp import send_to_peers
@@ -22,16 +20,19 @@ def handle_auction_end(client_state, obj):
     info = auction_list.get(auction_target)
 
     if info is None:
-        print(f"[INFO] AUCTION_END received for unknown auction {auction_target}")
+        UI.warn(f"AUCTION_END received for unknown auction {auction_target}")
         return
 
     closing_timestamp = info.get("closing_date")
     closing_dt = datetime.fromtimestamp(closing_timestamp)
-    print(f"\n--- AUCTION CLOSING NOTICE ---")
-    print(f"AUCTION CLOSED: ID {auction_target}")
-    print(f"Time to Close Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"-----------------------------------\n")
+    
+    print()
+    UI.sys("--- AUCTION CLOSING NOTICE ---")
+    UI.info(f"AUCTION CLOSED: ID {auction_target}")
+    UI.info(f"Time to Close Registered: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
+    UI.info(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
+    UI.sys("-----------------------------------")
+    print()
 
     if info.get("my_bid") == 'True':
 
@@ -42,10 +43,12 @@ def handle_auction_end(client_state, obj):
             token_id = my_winning_token.get("token_id")
 
             if token_id:
+                UI.step("Processing Winner Status", "STARTED")
+                
                 r_value = client_state.token_manager.get_blinding_factor_r(token_id)
 
                 if r_value is None:
-                    print(f"[!] Critical Error: Token ID {token_id} not found in local wallet.")
+                    UI.error(f"Critical Error: Token ID {token_id} not found in local wallet.")
                     return
 
                 deal_key = generate_aes_key()
@@ -66,7 +69,7 @@ def handle_auction_end(client_state, obj):
                 try:
                     token_data = client_state.token_manager.get_token()
                 except Exception as e:
-                    print(f"[!] Unable to create Auction: {e}")
+                    UI.error(f"Unable to create Auction Token: {e}")
                     return None
 
                 identity_pkg = {
@@ -93,14 +96,15 @@ def handle_auction_end(client_state, obj):
                 response_json = json.dumps(public_payload_obj)
                 c_response_json = encrypt_message_symmetric_gcm(response_json, client_state.group_key)
 
-                print(f"[WINNER] Submitting blind factor “r” revelation for auction {auction_target}...")
+                UI.sub_step("Action", "Submitting blind factor 'r' revelation")
                 send_to_peers(c_response_json, client_state.peer.connections)
+                UI.end_step("Winner Token Reveal", "SENT")
 
             else:
-                print("[ERROR] Token ID not found.")
+                UI.error("Token ID not found.")
                 return
 
         else:
-            print("[ERROR] Auction ended without a winner token in the data.")
+            UI.error("Auction ended without a winner token in the data.")
     else:
         return

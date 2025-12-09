@@ -1,10 +1,12 @@
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
-from crypto.crypt_decrypt.decrypt import decrypt_with_private_key, decrypt_message_symmetric_gcm
 import json
+from design.ui import UI
 from crypto.encoding.b64 import b64d, b64e
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 from client.message.auction.auction_handler import add_winning_key
 from crypto.token.token_manager import verify_peer_blinding_data
 from client.ca_handler.ca_message import get_valid_timestamp
+from crypto.crypt_decrypt.decrypt import decrypt_with_private_key, decrypt_message_symmetric_gcm
+from client.message.winner_reveal.final_revelation import format_large_int
 
 def send_auction_creation_proof(client_state, auction_id, deal_key):
 
@@ -23,7 +25,7 @@ def send_auction_creation_proof(client_state, auction_id, deal_key):
             r_value = client_state.token_manager.get_blinding_factor_r(token_id)
 
             if r_value is None:
-                print(f"[!] Critical Error: Token ID {token_id} not found in local wallet.")
+                UI.error(f"Critical Error: Token ID {token_id} not found in local wallet.")
                 return
 
             private_payload_obj = {
@@ -38,7 +40,7 @@ def send_auction_creation_proof(client_state, auction_id, deal_key):
             try:
                 token_data = client_state.token_manager.get_token()
             except Exception as e:
-                print(f"[!] Unable to create Auction: {e}")
+                UI.error(f"Unable to create Auction Token: {e}")
                 return None
 
             timestamp = get_valid_timestamp()
@@ -54,7 +56,7 @@ def send_auction_creation_proof(client_state, auction_id, deal_key):
             response_json = json.dumps(msg)
             c_response_json = encrypt_message_symmetric_gcm(response_json, client_state.group_key)
 
-            print(f"[Auction] Submitting blind factor “r” disclosure for auction {auction_id}...")
+            UI.sub_step("Action", "Submitting blind factor 'r' disclosure")
             from network.tcp import send_to_peers
             send_to_peers(c_response_json, client_state.peer.connections)
 
@@ -66,8 +68,10 @@ def handle_winner_reveal(client_state, obj):
     my_auction = client_state.auctions["my_auctions"].get(auction_id)
     
     if my_auction is None:
-        print(f"[ERROR] Received WINNER_REVEAL for auction {auction_id} that does not belong to me.")
+        UI.error(f"Received WINNER_REVEAL for auction {auction_id} that does not belong to me.")
         return
+
+    UI.step(f"Verifying Winner Claim (ID: {auction_id})", "PROCESSING")
 
     my_auction_private_key_pem = my_auction.get("private_key")
     
@@ -82,7 +86,7 @@ def handle_winner_reveal(client_state, obj):
     try:
         deal_key_encrypted_bytes = b64d(deal_key_encrypted_b64)
     except Exception as e:
-        print(f"[ERROR] Failed to decode encrypted Deal Key Base64: {e}")
+        UI.sub_error(f"Failed to decode encrypted Deal Key Base64: {e}")
         return
     
     try:
@@ -91,7 +95,7 @@ def handle_winner_reveal(client_state, obj):
             private_key_pem_bytes
         )
     except Exception as e:
-        print(f"[SECURITY] RSA Decryption Failure (Deal Key): {e}")
+        UI.sub_security(f"RSA Decryption Failure (Deal Key): {e}")
         return
     
 
@@ -108,18 +112,20 @@ def handle_winner_reveal(client_state, obj):
         revealed_token_id = private_info_obj.get("token_winner_bid_id")
         r_reveald = private_info_obj.get("blinding_factor_r")
         
-        print("\n=== Winner announcement processed ===")
-        print(f"Winner's Token ID: {revealed_token_id}")
-        print(f"Blinding Factor 'r': {r_reveald}")
+        UI.success("Winner Announcement Decrypted")
+        UI.sub_info(f"Winner Token ID: {revealed_token_id}")
+        UI.sub_info(f"Blinding Factor 'r': {format_large_int(r_reveald)}")
 
         
         token_sig = client_state.ledger.find_token_signature(revealed_token_id)
         if not verify_peer_blinding_data(client_state.ca_pub_pem, client_state.uuid, revealed_token_id, r_reveald, token_sig):
+            UI.sub_error("Winner verification failed.")
             return
     
     except Exception as e:
-        print(f"[SECURITY] GCM Decryption Failure (Private Content): {e}")
+        UI.sub_security(f"GCM Decryption Failure (Private Content): {e}")
         return
     
     add_winning_key(client_state.auctions, auction_id, deal_key_bytes)
     send_auction_creation_proof(client_state, auction_id, deal_key_bytes)
+    UI.end_step("Auction Owner Proof", "SENT")

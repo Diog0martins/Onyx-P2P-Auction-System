@@ -1,25 +1,28 @@
 import json
 import secrets
-
-from crypto.keys.keys_crypto import generate_key_pair
+from design.ui import UI
+from crypto.encoding.b64 import b64e
 from datetime import datetime, timedelta, timezone 
-
+from crypto.keys.keys_crypto import generate_key_pair
+from crypto.crypt_decrypt.hybrid import hybrid_encrypt
 from client.ca_handler.ca_message import get_valid_timestamp
 
-from crypto.crypt_decrypt.hybrid import hybrid_encrypt
-
-from crypto.encoding.b64 import b64e
-
-AUCTION_DURATION_SECONDS = 60
+AUCTION_DURATION_SECONDS = 30
 
 def cmd_auction(client, name, bid):
+    
+    UI.step("Creating New Auction", "START")
+    
     try:
         token_data = client.token_manager.get_token()
     except Exception as e:
-        print(f"[!] Unable to create Auction: {e}")
+        UI.sub_error(f"Unable to obtain token: {e}")
         return None
 
     auction_id = generate_next_auction_id(client.auctions)
+    
+    UI.sub_step("ID Generated", auction_id)
+    
     private_key_pem, public_key_pem = generate_key_pair()
 
     private_key_str = private_key_pem.decode("utf-8")
@@ -53,7 +56,7 @@ def cmd_auction(client, name, bid):
 
     add_my_auction(client.auctions, auction_id, public_key_str, private_key_str, bid, closing_timestamp, token_data, public_key_str)
 
-    print(f"Auction created with ID {auction_id}")
+    UI.end_step(f"Auction {auction_id} ({name})", "CREATED")
 
     # JSON ready to send
     auction_json = json.dumps(auction_obj)

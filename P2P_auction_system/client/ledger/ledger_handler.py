@@ -1,18 +1,8 @@
 import json, random
-from pathlib import Path
 from client.ledger.ledger_logic import Ledger, compare_chains
 from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
 from client.ca_handler.ca_message import get_valid_timestamp
 
-
-CONFIG_DIR = Path.cwd() / "config"
-
-def load_public_ledger(config):
-    ledger_file = CONFIG_DIR / config / "public_ledger.json"
-    if ledger_file.exists():
-        with ledger_file.open("r") as f:
-            return json.load(f)
-    return []
 
 def ledger_request_handler(request_id, client):
 
@@ -68,11 +58,8 @@ def ledger_update_handler(client, ledger_update_message):
 
     ledger = Ledger.from_dict(received_ledger)
 
-    print("Comparing chains:")
     if compare_chains(client.ledger.chain, ledger.chain) == "remote":
-        print("Remote is more updated")
         if ledger.verify_chain():
-            print("Chain verified")
             client.ledger = ledger
 
             client.ledger.save_to_file(client.user_path / "ledger.json") 
@@ -83,6 +70,7 @@ def ledger_update_handler(client, ledger_update_message):
 
             client.auctions = translated_ledger
 
+
 def init_cli_ledger(client, user_path):
     ledger_path = user_path  / "ledger.json"
     
@@ -92,11 +80,9 @@ def init_cli_ledger(client, user_path):
     current_ledger = Ledger.load_from_file(ledger_path)
 
     if current_ledger == None:
-        print("No ledger existed!")
         client.ledger =  Ledger()
         client.ledger.save_to_file(ledger_path)
     else:
-        print("Stored new ledger!")
         client.ledger = current_ledger
 
     return

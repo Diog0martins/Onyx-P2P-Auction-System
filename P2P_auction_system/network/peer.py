@@ -4,16 +4,15 @@ import json
 import threading
 from design.ui import UI
 from datetime import datetime
-from network.tcp import  send_to_peers
+from network.tcp import send_to_peers
 from config.config import parse_config
 from network.peer_state import PeerState
 from network.tcp import connect_to_relay
 from client.message.peer_input import peer_input, menu_user
+from client.ca_handler.ca_message import get_valid_timestamp
 from client.ledger.ledger_handler import prepare_ledger_request
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 
-
-from client.ca_handler.ca_message import get_valid_timestamp
 
 def check_auctions(client_state):
 
@@ -35,16 +34,18 @@ def check_auctions(client_state):
             if closing_timestamp and now >= closing_timestamp and auction_data_list.get("finished") == False:
                 
                 closing_dt = datetime.fromtimestamp(closing_timestamp)
-                print(f"\n---AUCTION CLOSING NOTICE ---")
-                print(f"AUCTION CLOSED: ID {auction_id}")
-                print(f"Time to Close Regitada: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
-                print(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
-                print(f"-----------------------------------\n")
-
+                print()
+                UI.sys("--- AUCTION CLOSING NOTICE ---")
+                UI.info(f"AUCTION CLOSED: ID {auction_id}")
+                UI.info(f"Time to Close Registered: {closing_dt.strftime('%Y-%m-%d %H:%M:%S')}")
+                UI.info(f"Current Time: {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')}")
+                UI.sys("-----------------------------------")
+                print()
+                
                 try:
                     token_data = client_state.token_manager.get_token()
                 except Exception as e:
-                    print(f"[!] Unable to create Auction: {e}")
+                    UI.error(f"Unable to create Auction End Token: {e}")
                     return None
 
                 timestamp = get_valid_timestamp()
@@ -64,11 +65,12 @@ def check_auctions(client_state):
                 
         time.sleep(10)
 
-    print("[INFO] Auction monitoring thread completed.")
+    UI.sys("Auction monitoring thread completed.")
 
 def user_auction_input(connections, stop_event, client):
 
-    print("Sending ledger request!")
+    UI.sys("Sending ledger request!")
+
     request = prepare_ledger_request(client)
 
     if not request == None:
@@ -76,6 +78,7 @@ def user_auction_input(connections, stop_event, client):
         send_to_peers(c_request, client.peer.connections)    
 
     menu_user()
+    UI.sys_ready()
 
     while not stop_event.is_set():
         
@@ -85,7 +88,7 @@ def user_auction_input(connections, stop_event, client):
             continue
 
         if isinstance(msg, str) and msg.lower() == "exit":
-            print("[*] Exiting on user request.")
+            UI.sys("Exiting on user request.")
             stop_event.set()
             client.is_running = False
             break
@@ -93,7 +96,7 @@ def user_auction_input(connections, stop_event, client):
         msg = encrypt_message_symmetric_gcm(msg, client.group_key)
 
         if not connections:
-            print("[!] No connection to Relay. Message not sent.")
+            UI.error("No connection to Relay. Message not sent.")
             continue
 
         # Send to the only connection we have (the Relay)
@@ -121,9 +124,7 @@ def run_peer(host, port, client):
         sys.exit(1)
 
     # 2. Setup Peer State
-    # (Assuming PeerState and TEST are defined in your imports or global scope)
-    # If TEST is not defined globally, ensure it is passed or imported
-    TEST = 0 # Defaulting if not present in snippet
+    TEST = 0 
     
     if TEST == 1:
         state = PeerState(host, port)
@@ -132,14 +133,7 @@ def run_peer(host, port, client):
 
     client.peer = state
 
-    # UI PRINT - The final step of the tree
     UI.end_step("P2P Relay Connection", "ESTABLISHED")
-    # print(f"    Target: {relay_host}:{relay_port}") # Optional extra detail
-
-    # ---------------------------------------------------------
-    # FROM HERE ON: We stop the "Tree" visuals because threads
-    # will start printing asynchronous logs.
-    # ---------------------------------------------------------
 
     # 3. Start persistent connection to Relay
     relay_thread = threading.Thread(
@@ -157,12 +151,10 @@ def run_peer(host, port, client):
     relay_thread.start()
     auctions_thread.start()
 
-    # 4. Launch the User Menu (Main Loop)
-    # The banner and tree are done. Now the messaging interface takes over.
     peer_messaging(state, client)
 
     # --- Cleanup ---
-    print("\n[*] Shutting down peer.")
+    UI.sys("Shutting down peer.")
     state.stop_event.set()
 
     for c in state.connections:

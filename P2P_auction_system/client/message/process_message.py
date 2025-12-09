@@ -1,13 +1,14 @@
 import json
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
-from client.ledger.ledger_handler import load_public_ledger, ledger_request_handler, ledger_update_handler
+import time
 from crypto.keys.group_keys import find_my_new_key
-from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
+from client.ca_handler.ca_message import verify_timestamp_signature
+from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 from client.message.auction.auction_end_handler import handle_auction_end
 from client.message.winner_reveal.winner_reveal_handler import handle_winner_reveal
+from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
 from client.message.winner_reveal.final_revelation import prepare_winner_identity, get_client_identity
-import time
-from client.ca_handler.ca_message import verify_timestamp_signature
+from client.ledger.ledger_handler import ledger_request_handler, ledger_update_handler
+from design.ui import UI 
 
 def is_auction_closed(auctions, auction_id):
     now = int(time.time())
@@ -23,16 +24,6 @@ def is_auction_closed(auctions, auction_id):
         return False
         
     return now >= closing_time
-
-def verify_double_spending2(token_id, config):
-    ledger = load_public_ledger(config)
-    for entry in ledger:
-        # Checks whether the entry has a token and whether the ID is the same
-        if "token" in entry:
-            existing_id = entry["token"].get("token_id")
-            if existing_id == token_id:
-                return True # It's already been spent!
-    return False
 
 def verify_double_spending(token_id, client):
     return client.ledger.token_used(token_id)
@@ -68,42 +59,43 @@ def process_message(msg, client_state):
     try:
         obj = json.loads(msg)
     except:
-        print("[!] Received non-JSON message; ignored")
-        print("RAW MESSAGE:", repr(msg))
+        UI.error("Received non-JSON message; ignored")
         return
 
 
     mtype = obj.get("type")
+
+    UI.peer(f"Received new {mtype}")
 
     if mtype in message_types:
 
         # === 1. VERIFICAÇÃO DE TOKENS ===
         token_data = obj.get("token")
         if not token_data:
-            print(f"[!] Message {mtype} rejected: No token.")
+            UI.sub_error("Rejected: Missing Token Data")
             return
 
         token_id = token_data.get("token_id")
         token_sig = token_data.get("token_sig")
 
         if not client_state.token_manager.verify_token(token_id, token_sig):
-            print(f"[Security] WARNING: Invalid token signature in message {obj.get('id')}. Ignored.")
+            UI.sub_security(f"Invalid Token Signature (Msg ID: {obj.get('id')})")
             return
 
         if verify_double_spending(token_id, client_state):
-            print(f"[Security] ALERT: Attempted double spending (Token {token_id}). Ignored.")
+            UI.sub_security(f"Double Spending Attempt Detected (Token {token_id})")
             return
 
-        # === 2. VERIFICAÇÃO DE TIMESTAMP ===
+        # === 2. TIMESTAMP VERIFICATION ===
         timestamp_data = obj.get("timestamp")
 
         if not timestamp_data:
-            print(f"[Security] REJEITADO {mtype}: Mensagem sem Timestamp.")
+            UI.sub_security(f"Rejected {mtype}: Missing Timestamp")
             return
 
-        # Verificar Assinatura da CA
+        # Verifie CA Signature
         if not verify_timestamp_signature(client_state.ca_pub_pem, timestamp_data):
-            print(f"[Security] AVISO: Assinatura da CA inválida no timestamp da mensagem {obj.get('id')}.")
+            UI.sub_security(f"Invalid CA Signature on Timestamp (Msg ID: {obj.get('id')})")
             return
 
         # == Auction Logic Messages
@@ -114,14 +106,15 @@ def process_message(msg, client_state):
             if mtype == "bid":
                 if is_auction_closed(client_state.auctions, obj.get('auction_id')):
                     current_sync_time = int(time.time() + client_state.time_offset)
-                    print(f"[X] Offer rejected. Time expired. ({current_sync_time})")
+                    UI.sub_auction(f"Bid Rejected: Auction Expired ({current_sync_time})")
                     should_process = False
 
             if should_process:
                 if client_state.ledger.add_action(obj) == 1:
                     client_state.ledger.save_to_file(client_state.user_path / "ledger.json")
                 update_personal_auctions(client_state, obj)
-                print(f"[✓] Stored {mtype} (id={obj.get('id')}) in ledger")
+                
+                UI.sub_auction(f"New {mtype} stored in Ledger (ID: {obj.get('id')})")
 
         # == End of Auction Related Messages
         elif mtype == "auctionEnd":
@@ -149,7 +142,7 @@ def process_message(msg, client_state):
 
         elif mtype == "ledger_update":
             if not client_state.ledger_request_id == 0:
-                print("Receive updated ledger!")
+                UI.sub_peer("Ledger Synchronized Successfully")
                 ledger_update_handler(client_state, obj)
 
     # == New key from CA
@@ -160,6 +153,7 @@ def process_message(msg, client_state):
 
         if not new_group_key == None:
             client_state.group_key = new_group_key
+            UI.sub_security("Group Key Rotated Successfully")
 
     else:
-        print(f"[?] Unknown message type received: {mtype}")
+        UI.sub_error(f"Unknown message type received: {mtype}")

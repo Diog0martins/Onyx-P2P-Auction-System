@@ -27,7 +27,7 @@ def start_client(args):
         user_path = Path("config") / config / "user"
         host, port = parse_config(config)
         UI.step("Loading Configuration", "FILE")
-        UI.sub_info("Source", f"config/{config}")
+        UI.sub_step("Source", f"config/{config}")
     
     else: 
         # LAN Case
@@ -36,7 +36,7 @@ def start_client(args):
         port = 6000
         # UI PRINT
         UI.step("Network Discovery", "LAN")
-        UI.sub_info("Host IP", host)
+        UI.sub_step("Host IP", host)
 
     check_user_path(user_path)
 
@@ -58,7 +58,7 @@ def start_client(args):
         client.is_running = True
         
         UI.step("Certificate Authority", "REGISTERED")
-        UI.sub_info("UID", f"{client.uuid[:8]}...") # Show short UID
+        UI.sub_step("UID", f"{client.uuid[:8]}...") # Show short UID
     except Exception as e:
         UI.error(f"CA Connection failed: {e}")
         sys.exit(1)
@@ -77,8 +77,8 @@ def start_client(args):
         client.auctions = ledger_to_auction_dict(client.ledger, client.token_manager)
 
     UI.step("Client structures", "SYNCED")
-    UI.sub_info("Ledger", "Loaded")
-    UI.sub_info("Token Manager", "Loaded")
+    UI.sub_step("Ledger", "Loaded")
+    UI.sub_step("Token Manager", "Loaded")
 
     # Host Discovery and Connection Establishment
     run_peer(host, port, client)

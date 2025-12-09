@@ -1,5 +1,5 @@
-import threading, socket, queue, time
-import traceback
+import threading, socket
+from design.ui import UI
 from network.peer_state import PeerState
 from client.message.process_message import process_message
 from crypto.crypt_decrypt.decrypt import decrypt_message_symmetric_gcm
@@ -20,7 +20,7 @@ def send_to_peers(msg, connections):
                 pass
 
 def handle_connection(conn, addr, client_state):
-    print(f"            [+] Connected: {addr}")
+    UI.success(f"Connected: {addr}")
 
     buffer = b""
 
@@ -47,7 +47,7 @@ def handle_connection(conn, addr, client_state):
                 try:
                     c_msg = c_msg_bytes.decode('utf-8').strip()
                 except UnicodeDecodeError:
-                    print(f"[!] Erro de descodificação ignorado na conexão {addr}")
+                    UI.warn(f"Decoding error ignored in connection {addr}")
                     continue
 
                 if not c_msg:
@@ -61,19 +61,19 @@ def handle_connection(conn, addr, client_state):
                         process_message(c_msg, client_state)
 
                 except Exception as e:
-                    print(f"[!] Erro ao processar mensagem: {e}")
+                    UI.error(f"Error processing message: {e}")
 
         except ConnectionResetError:
-            print(f"[-] Ligação fechada por {addr}")
+            UI.warn(f"Connection closed by {addr}")
             break
 
         except Exception as e:
             if not client_state.peer.stop_event.is_set():
-                print(f"[!] Erro crítico na conexão {addr}: {e}")
+                UI.error(f"Critical error in connection {addr}: {e}")
             break
 
     if not client_state.peer.stop_event.is_set():
-        print(f"[-] Disconnected: {addr}")
+        UI.sys(f"Disconnected: {addr}")
     try:
         conn.close()
     except:
@@ -90,7 +90,7 @@ def accept_incoming(listener, connections, client_state):
                 daemon=True
             ).start()
         except Exception as e:
-            print(f"[!] Error in accept_incoming: {e}")
+            UI.error(f"Error in accept_incoming: {e}")
 
 
 def await_new_peers_conn(state: PeerState, client_state):
@@ -104,7 +104,7 @@ def peer_tcp_handling(client_state):
     listener.bind((client_state.peer.host, client_state.peer.port))
     listener.listen()
 
-    print(f"[*] Listening on {client_state.peer.host}:{client_state.peer.port}")
+    UI.sys(f"Listening on {client_state.peer.host}:{client_state.peer.port}")
 
     threading.Thread(
         target=accept_incoming,
@@ -116,7 +116,7 @@ def peer_tcp_handling(client_state):
 
 
 def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
-    print(f"    [*] Connecting to RELAY at {relay_host}:{relay_port}...")
+    UI.sys(f"Connecting to RELAY at {relay_host}:{relay_port}...")
 
     while not state.stop_event.is_set():
         conn = None
@@ -128,7 +128,7 @@ def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             conn.connect((relay_host, relay_port))
 
-            print(f"        [+] Successfully connected to Relay!")
+            UI.success(f"Successfully connected to Relay!")
 
             state.connections.append(conn)
 
@@ -136,14 +136,14 @@ def connect_to_relay(state: PeerState, relay_host, relay_port, client_state):
 
             handle_connection(conn, (relay_host, relay_port), client_state)
 
-            print("[!] Connection to Relay lost. Attempting to reconnect...")
+            UI.warn("Connection to Relay lost. Attempting to reconnect...")
 
         except ConnectionRefusedError:
-            print("[!] Relay unavailable. Retrying in 3 seconds....")
+            UI.warn("Relay unavailable. Retrying in 3 seconds....")
             state.stop_event.wait(3)
 
         except Exception as e:
-            print(f"[!] Error connecting to Relay: {e}")
+            UI.error(f"Error connecting to Relay: {e}")
             state.stop_event.wait(3)
 
         finally:
