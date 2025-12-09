@@ -1,11 +1,12 @@
 import json
 import time
+from datetime import datetime
 from crypto.keys.group_keys import find_my_new_key
 from client.ca_handler.ca_message import verify_timestamp_signature
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 from client.message.auction.auction_end_handler import handle_auction_end
 from client.message.winner_reveal.winner_reveal_handler import handle_winner_reveal
-from client.message.auction.auction_handler import update_auction_higher_bid, add_auction
+from client.message.auction.auction_handler import update_auction_higher_bid, add_auction, get_auction_higher_bid, get_auction_higher_bid_timestamp
 from client.message.winner_reveal.final_revelation import prepare_winner_identity, get_client_identity
 from client.ledger.ledger_handler import ledger_request_handler, ledger_update_handler
 from design.ui import UI 
@@ -56,8 +57,31 @@ def update_personal_auctions(client, msg):
     else:
         auction_id = msg.get("auction_id")
         new_bid = msg.get("bid")
+        timestamp = msg.get("timestamp")
+        
+        current_high = get_auction_higher_bid(client.auctions, auction_id)
+        if new_bid < current_high:
+            UI.sub_warn(f"New bid is too low! Current highest is {current_high}.")
+            return
+        elif new_bid == current_high:
+            last_bid_timestamp = get_auction_higher_bid_timestamp(client.auctions, auction_id)
+            
+            if last_bid_timestamp == None:
+                UI.sub_warn(f"Auction just started! Current highest is {current_high}.")
+                return
+            
+            ex_timestamp = last_bid_timestamp["timestamp"]
+            new_timestamp = timestamp["timestamp"]
 
-        update_auction_higher_bid(client.auctions, auction_id, new_bid, "False", token_data)
+            ex_ts = datetime.fromisoformat(ex_timestamp)
+            new_ts = datetime.fromisoformat(new_timestamp)
+
+            # 3. Compare and if new_ts > ex_ts, it means the new bid happened LATER (it is newer)
+            if new_ts > ex_ts:
+                UI.sub_warn(f"Bid is equal to previous bid of {current_high} and arrived later.")
+                return
+        
+        update_auction_higher_bid(client.auctions, auction_id, new_bid, "False", token_data, timestamp)
 
 
 
@@ -70,6 +94,8 @@ def process_message(msg, client_state):
     (Token Validity, Double Spending, CA Timestamps), and routes the payload to 
     the specific handler (Auction, Ledger, or Reveal protocols).
     """
+
+    #print(client_state.auctions)
 
     message_types = ["auction",
                      "bid", 

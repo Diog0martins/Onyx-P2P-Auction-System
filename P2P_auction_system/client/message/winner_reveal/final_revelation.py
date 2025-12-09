@@ -181,4 +181,8 @@ def prepare_winner_identity(client_state, msg):
         UI.sub_security(f"GCM Decryption Failure (Private Content): {e}")
         return
     
-    # If
+    # If identity is proved, send identity to auction owner
+    UI.sub_step("Action", "Sending Winner Identity")
+    send_winner_identity(client_state, auction_id, deal_key)
+    remove_winning_key(client_state.auctions, auction_id)
+    UI.end_step("Identity Exchange", "COMPLETED")

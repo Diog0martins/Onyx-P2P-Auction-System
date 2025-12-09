@@ -101,8 +101,20 @@ def get_auction_higher_bid(auctions: dict, auction_id: int):
     auction = auctions["auction_list"].get(auction_id)
     return auction["highest_bid"] if auction else None
 
+def get_auction_higher_bid_timestamp(auctions: dict, auction_id: int):
+    """
+    Retrieves the current highest bid amount for a specific auction.
+    """
+    auction = auctions["auction_list"].get(auction_id)
 
-def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid, used_token):
+    try:
+        if auction:
+            timestamp = auction["timestamp"]
+            return timestamp
+    except:
+        return None  
+
+def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid, used_token, timestamp):
     """
     Updates the local state of an auction with a new valid highest bid.
     """
@@ -112,7 +124,8 @@ def update_auction_higher_bid(auctions, auction_id, new_bid, is_my_bid, used_tok
     auctions["auction_list"][auction_id]["highest_bid"] = new_bid
     auctions["auction_list"][auction_id]["my_bid"] = is_my_bid
     auctions["auction_list"][auction_id]["last_bid_token_data"] = used_token
-    
+    auctions["auction_list"][auction_id]["timestamp"] = timestamp
+
     return True
 
 

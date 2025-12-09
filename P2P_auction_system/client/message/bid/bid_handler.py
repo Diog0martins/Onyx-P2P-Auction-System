@@ -1,10 +1,12 @@
 import secrets
+from datetime import datetime
 import json, random
+import time
 from design.ui import UI
 from crypto.encoding.b64 import b64e
 from crypto.crypt_decrypt.hybrid import hybrid_encrypt
 from client.ca_handler.ca_message import get_valid_timestamp
-from client.message.auction.auction_handler import get_auction_higher_bid, check_auction_existence, update_auction_higher_bid
+from client.message.auction.auction_handler import get_auction_higher_bid, check_auction_existence, update_auction_higher_bid, get_auction_higher_bid_timestamp
 
 
 def cmd_bid(auction_id, bid, client):
@@ -33,10 +35,31 @@ def cmd_bid(auction_id, bid, client):
         UI.sub_error(f"The auction {auction_id} doesn't exist!")
         return
 
+    #Get timestamp for to check if bid is more recent
+    timestamp = get_valid_timestamp()
     current_high = get_auction_higher_bid(client.auctions, auction_id)
     if bid < current_high:
         UI.sub_warn(f"Bid too low! Current highest is {current_high}.")
         return
+    elif bid == current_high:
+        last_bid_timestamp = get_auction_higher_bid_timestamp(client.auctions, auction_id)
+        
+        if last_bid_timestamp == None:
+            UI.sub_warn(f"Auction just started! Current highest is {current_high}.")
+            return
+        
+        ex_timestamp = last_bid_timestamp["timestamp"]
+        new_timestamp = timestamp["timestamp"]
+        ex_ts = datetime.fromisoformat(ex_timestamp)
+        new_ts = datetime.fromisoformat(new_timestamp)
+
+        # 3. Compare and if new_ts > ex_ts, it means the new bid happened LATER (it is newer)
+        if new_ts > ex_ts:
+            UI.sub_warn(f"Bid is equal to previous bid of {current_high} and arrived later.")
+            return
+
+    # Comment to prove timestamp authority
+    #time.sleep(10)
 
     # 2. Token Retrieval & Identity Encapsulation
     try:
@@ -55,7 +78,7 @@ def cmd_bid(auction_id, bid, client):
     }
 
     encrypted_identity_blob = hybrid_encrypt(identity_pkg, client.ca_pub_pem)
-    timestamp = get_valid_timestamp()
+
 
     # 3. Message Construction & Local Update
     bid_obj = {
@@ -73,7 +96,7 @@ def cmd_bid(auction_id, bid, client):
         UI.sub_error(f"Offer rejected. Time expired.")
         return None
     else:
-        update_auction_higher_bid(client.auctions, auction_id, bid, "True", token_data)    
+        update_auction_higher_bid(client.auctions, auction_id, bid, "True", token_data, timestamp)    
 
     UI.end_step(f"Bid {bid_id} created", "SUCCESS")
 
