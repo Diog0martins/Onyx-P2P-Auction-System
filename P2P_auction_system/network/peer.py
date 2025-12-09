@@ -14,6 +14,11 @@ from client.ledger.ledger_handler import prepare_ledger_request
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 
 def check_auctions(client_state):
+    """
+        Background thread that monitors the status of active auctions.
+        Checks if the closing time has passed for any auction owned by the client.
+        If closed, sends an 'auctionEnd' message to the network.
+    """
 
     while client_state.is_running:
         
@@ -67,6 +72,12 @@ def check_auctions(client_state):
     UI.sys("Auction monitoring thread completed.")
 
 def user_auction_input(connections, stop_event, client):
+    """
+        Handles the interactive Command Line Interface (CLI) loop.
+        1. Requests the latest ledger upon startup.
+        2. Captures user commands (bid, auction, status).
+        3. Encrypts valid commands with the Group Key and sends them to the Relay.
+    """
 
     UI.sys("Sending ledger request!")
 
@@ -102,6 +113,10 @@ def user_auction_input(connections, stop_event, client):
         send_to_peers(msg, client.peer.connections)
 
 def peer_messaging(state: PeerState, client):
+    """
+        Wrapper function that initializes and starts the user input thread.
+    """
+
     t = threading.Thread(
         target=user_auction_input,
         args=(state.connections, state.stop_event, client),
@@ -112,6 +127,15 @@ def peer_messaging(state: PeerState, client):
 
 
 def run_peer(host, port, client):
+    """
+        The main entry point for the Peer Network logic.
+        1. Loads Relay configuration.
+        2. Initializes PeerState.
+        3. Starts the Relay connection thread and Auction monitoring thread.
+        4. Enters the main messaging loop.
+        5. Performs cleanup (closing sockets) on exit.
+    """
+
     # 1. Load Relay configuration dynamically
     relay_host = "Unknown"
     relay_port = 0
@@ -128,8 +152,6 @@ def run_peer(host, port, client):
         sys.exit(1)
 
     # 2. Setup Peer State
-
-    
     if TEST == 1:
         state = PeerState(host, port)
     else:
