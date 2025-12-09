@@ -21,8 +21,8 @@
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/Diog0martins/Peer-to-Peer-Privacy-Preserving-Auction-System
-    cd Peer-to-Peer-Privacy-Preserving-Auction-System
+    git clone git@github.com:Diog0martins/Onyx-P2P-Auction-System.git
+    cd Onyx-P2P-Auction-System
     ```
 
 -----
