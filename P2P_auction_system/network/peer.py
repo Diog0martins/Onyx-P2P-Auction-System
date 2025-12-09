@@ -123,12 +123,14 @@ def run_peer(host, port, client):
             relay_host, relay_port = parse_config("configRelay")
         else:
             relay_host = "192.168.89.52"
+            relay_host = "192.168.89.52"
             relay_port = 7000
     except Exception as e:
         UI.error(f"Relay config missing: {e}")
         sys.exit(1)
 
     # 2. Setup Peer State
+
     
     if TEST == 1:
         state = PeerState(host, port)
