@@ -6,21 +6,29 @@ from client.message.status_handler import print_auction_state
 
 
 def menu_user():
+    """
+    Displays the available commands and syntax to the user in the CLI.
+    """
     UI.help()
 
-def peer_input(client_state):
 
+def peer_input(client_state):
+    """
+    Parses raw user input from the terminal, routes it to the appropriate command handler 
+    (bid, auction, status), and commits valid resulting actions to the local ledger.
+    """
     try:
         user_input = input("").strip()
     except EOFError:
         return "exit"
 
     parts = user_input.split()
-
     if len(parts) == 0: return None
+    
     command = parts[0].lower()
     msg = None
 
+    # Route Input to Specific Handlers
     if command == "bid":
         if len(parts) < 3:
             UI.error("Usage: bid <auction_id> <min_bid>")
@@ -28,7 +36,6 @@ def peer_input(client_state):
 
         auction_id = parts[1]
         min_bid = parts[2]
-
         msg = cmd_bid(auction_id, min_bid, client_state)
 
     elif command == "auction":
@@ -61,11 +68,11 @@ def peer_input(client_state):
         UI.warn("Unknown command.")
         return None
 
+    # If action generated a valid message, update Local Ledger immediately
     if msg:
         ledger_action = json.loads(msg)
         if client_state.ledger.add_action(ledger_action) == 1:
             UI.sub_step("Ledger", "Action Saved")
             client_state.ledger.save_to_file(client_state.user_path / "ledger.json")
-
 
     return msg

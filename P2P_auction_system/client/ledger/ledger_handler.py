@@ -4,8 +4,14 @@ from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
 from client.ca_handler.ca_message import get_valid_timestamp
 
 
-def ledger_request_handler(request_id, client):
+# ============= Network Request Handling =============
 
+
+def ledger_request_handler(request_id, client):
+    """
+    Processes an incoming 'ledger_request'. Serializes the local ledger and 
+    packages it into a 'ledger_update' message to sync the requesting peer.
+    """
     to_send = client.ledger.to_dict()
 
     try:
@@ -30,7 +36,10 @@ def ledger_request_handler(request_id, client):
 
 
 def prepare_ledger_request(client):
-
+    """
+    Creates a 'ledger_request' message to broadcast 
+    to the network when the client just joined.
+    """
     try:
         token_data = client.token_manager.get_token()
     except Exception as e:
@@ -38,7 +47,6 @@ def prepare_ledger_request(client):
         return None
 
     client.ledger_request_id = random.randint(1, 1000000000)
-
     timestamp = get_valid_timestamp()
 
     update_obj = {
@@ -52,26 +60,38 @@ def prepare_ledger_request(client):
     return update_json
 
 
+# ============= Network Update Processing =============
+
 def ledger_update_handler(client, ledger_update_message):   
-
+    """
+    Processes a 'ledger_update' received from a peer. It compares the received chain
+    with the local chain. If the remote chain is longer and valid, it replaces the 
+    local ledger (Synchronization) and rebuilds the auction state.
+    """
     received_ledger = ledger_update_message.get("ledger")
-
     ledger = Ledger.from_dict(received_ledger)
 
+    # Consensus: Longest Chain Rule
     if compare_chains(client.ledger.chain, ledger.chain) == "remote":
         if ledger.verify_chain():
             client.ledger = ledger
-
+            
+            # Persist new state
             client.ledger.save_to_file(client.user_path / "ledger.json") 
-
             client.ledger_request_id = 0
 
+            # Re-interpret the blockchain to update run-time dictionary state
             translated_ledger = ledger_to_auction_dict(client.ledger, client.token_manager)
-
             client.auctions = translated_ledger
 
 
+# ============= Initialization =============
+
 def init_cli_ledger(client, user_path):
+    """
+    Initializes the client's ledger on startup. Attempts to load from file
+    and if the file is missing or invalid, creates a new Genesis ledger.
+    """
     ledger_path = user_path  / "ledger.json"
     
     if not ledger_path.exists():

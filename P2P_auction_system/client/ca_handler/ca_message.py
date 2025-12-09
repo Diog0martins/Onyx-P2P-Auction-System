@@ -5,7 +5,13 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from client.ca_handler.ca_info import CA_URL
 
 
+# ============= Timestamp Services =============
+
 def get_valid_timestamp(delta_seconds=None):
+    """
+    Requests a cryptographically signed timestamp from the CA to ensure event 
+    ordering and integrity, preventing local clock manipulation.
+    """
     try:
         params = {}
         if delta_seconds is not None:
@@ -21,25 +27,13 @@ def get_valid_timestamp(delta_seconds=None):
     except Exception as e:
         print(f"Error fetching timestamp: {e}")
         return None
-    
-def leave_network(uid):
-    try:
-        payload = {"uid": uid}
-        
-        response = requests.post(f"{CA_URL}/leave", json=payload)
-        response.raise_for_status()
-        
-        data = response.json()
-        
-        print(f"Successfully left. New Group Key received.")
-        
-        return data["new_keys"]
 
-    except Exception as e:
-        print(f"Error leaving network: {e}")
-        return "{}"
 
 def verify_timestamp_signature(ca_pub_pem, timestamp_data):
+    """
+    Verifies that a timestamp attached to a message was legitimately signed by the CA,
+    ensuring it hasn't been tampered with or forged.
+    """
     try:
         if not timestamp_data:
             return False
@@ -72,3 +66,27 @@ def verify_timestamp_signature(ca_pub_pem, timestamp_data):
     except Exception as e:
         print(f"[Security] Falha na verificação da assinatura do Timestamp: {e}")
         return False
+
+
+# ============= Network Management =============
+
+def leave_network(uid):
+    """
+    Notifies the CA that this peer is leaving the network. This triggers the CA 
+    to issue a Group Key Rotation to the remaining peers for forward secrecy.
+    """
+    try:
+        payload = {"uid": uid}
+        
+        response = requests.post(f"{CA_URL}/leave", json=payload)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        print(f"Successfully left. New Group Key received.")
+        
+        return data["new_keys"]
+
+    except Exception as e:
+        print(f"Error leaving network: {e}")
+        return "{}"

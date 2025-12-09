@@ -13,41 +13,46 @@ from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
 
 
 def check_user_path(user_path):
+    """
+    Ensures that the directory for storing user data (keys, ledger and tokens) exists.
+    """
     if not user_path.exists():
         user_path.mkdir(parents=True, exist_ok=True)
 
 
 def start_client(args):
-    # 1. Print Banner
+    """
+    Orchestrates the node startup sequence: loads configuration, generates identity keys,
+    registers with the Certificate Authority (CA), initializes the local ledger,
+    and starts the P2P network listener.
+    """
     UI.banner()
 
-    # Verify if we are working in LAN or localhost
+    # Determine Network Mode (Config File vs Automatic LAN)
     if len(args) == 2:
         config = args[1]
         user_path = Path("config") / config / "user"
         host, port = parse_config(config)
         UI.step("Loading Configuration", "FILE")
         UI.sub_step("Source", f"config/{config}")
-    
     else: 
         # LAN Case
         user_path = Path("user")
         host = get_ip()
         port = 6000
-        # UI PRINT
         UI.step("Network Discovery", "LAN")
         UI.sub_step("Host IP", host)
 
     check_user_path(user_path)
 
-    # Generate or get key pair
+    # Cryptographic Identity Generation (RSA Keys)
     private_key, public_key = prepare_key_pair_generation(user_path)
     UI.step("Cryptographic Identity", "LOADED")
     
-    # Generate Client Object
+    # Initialize Client State Object
     client = Client(user_path, public_key, private_key)
 
-    # Send public key to CA
+    # Register with CA to obtain Certificate and Group Key
     try:
         info = connect_and_register_to_ca(client)
         
@@ -58,11 +63,12 @@ def start_client(args):
         client.is_running = True
         
         UI.step("Certificate Authority", "REGISTERED")
-        UI.sub_step("UID", f"{client.uuid[:8]}...") # Show short UID
+        UI.sub_step("UID", f"{client.uuid[:8]}...") 
     except Exception as e:
         UI.error(f"CA Connection failed: {e}")
         sys.exit(1)
 
+    # Initialize Token Manager for Blind Signatures
     config_name = args[1] if len(args) == 2 else "config_lan"
     client.token_manager = TokenManager(
         config_name=config_name,
@@ -70,7 +76,7 @@ def start_client(args):
         uid=info["uid"]
     )
 
-    # Get last used ledger
+    # Load and Synchronize Local Ledger (Blockchain)
     init_cli_ledger(client, user_path)
     
     if not len(client.ledger.chain) == 1:
@@ -80,7 +86,5 @@ def start_client(args):
     UI.sub_step("Ledger", "Loaded")
     UI.sub_step("Token Manager", "Loaded")
 
-    # Host Discovery and Connection Establishment
+    # Start P2P Network Listener
     run_peer(host, port, client)
-
-

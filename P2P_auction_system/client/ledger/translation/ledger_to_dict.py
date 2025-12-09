@@ -1,6 +1,12 @@
 import json
 
+# ============= Parsing Utilities =============
+
 def parse_event(event):
+    """
+    Safely parses an event from the blockchain block. Handles cases where the event
+    might be a dictionary string or a dictionary object.
+    """
     if event is None:
         return None
     if isinstance(event, dict):
@@ -15,14 +21,11 @@ def parse_event(event):
             return None
     return None
 
-# -------------------------------
-#   EVENT HANDLERS
-# -------------------------------
 
 def _ensure_auction_entry(auctions, auction_id):
     """
-    Creates a default auction entry if it doesn't exist.
-    Returns the key (int) or None if invalid.
+    Helper to initialize a default auction structure in the state dictionary 
+    if it doesn't already exist.
     """
     try:
         key = int(auction_id)
@@ -41,7 +44,14 @@ def _ensure_auction_entry(auctions, auction_id):
         }
     return key
 
+
+# ============= Event Handlers =============
+
 def handle_auction_open(auctions, event, token_manager):
+    """
+    Updates the state when an 'auction' creation event is found in the ledger.
+    Checks if the local user is the owner of this auction.
+    """
     auction_id = event.get("id")
     min_bid = event.get("min_bid", 0.0)
     pub_key = event.get("public_key")
@@ -65,29 +75,33 @@ def handle_auction_open(auctions, event, token_manager):
     if closing_date:
         entry["closing_date"] = int(closing_date)
 
-    # 2. Handle Token Data & Ownership
+    # 2. Handle Token Data & Ownership (Am I the seller?)
     if token_data and isinstance(token_data, dict):
         entry["auction_token_data"] = token_data
         
-        # --- STRICT OWNERSHIP CHECK ---
+        # Check ownership using Token Manager
         t_id = token_data.get("token_id")
         
         if t_id and token_manager and token_manager.is_token_owner(t_id):
-            # We initialize my_auctions with the current highest bid (which is min_bid at start)
             auctions["my_auctions"][str(key)] = {
                 "public_key": pub_key,
                 "auction_token_data": token_data,
-                "highest_bid": entry["highest_bid"], # <--- Added this to ensure init value is not N/A
+                "highest_bid": entry["highest_bid"], 
                 "finished": entry["finished"]
             }
 
-    # Update global counter
+    # Update global counter for ID generation
     try:
         auctions["last_auction_id"] = max(int(auctions.get("last_auction_id", 0)), key)
     except (TypeError, ValueError):
         pass
 
+
 def handle_bid_event(auctions, event, token_manager):
+    """
+    Updates the state when a 'bid' event is found. Updates the highest bid if the 
+    value is higher than the current one and checks if the local user is the new highest bidder.
+    """
     auction_id = event.get("auction_id")
     bid_amount = event.get("bid")
     token_data = event.get("token") 
@@ -121,16 +135,19 @@ def handle_bid_event(auctions, event, token_manager):
                 is_mine = True
         entry["my_bid"] = "True" if is_mine else "False"
 
-        # 3. SYNC WITH MY_AUCTIONS (Fix for "N/A" issue)
-        # If I am the owner of this auction, I need to see the highest bid in 'my_auctions' too.
+        # 3. Sync with My Auctions
         str_key = str(key)
         if str_key in auctions["my_auctions"]:
             auctions["my_auctions"][str_key]["highest_bid"] = bid_val
-            # Optionally update the last bid token data in my_auctions if your UI needs it
             if token_data:
                  auctions["my_auctions"][str_key]["last_bid_token_data"] = token_data
 
+
 def handle_auction_end(auctions, event):
+    """
+    Updates the state when an 'auctionEnd' event is found. Marks the auction as finished
+    and determines if the local user won the auction.
+    """
     auction_id = event.get("auction_id")
     if auction_id is None:
         return
@@ -148,15 +165,18 @@ def handle_auction_end(auctions, event):
         if str(key) in auctions["my_auctions"]:
             auctions["my_auctions"][str(key)]["finished"] = True
 
-        # If I am the highest bidder ("my_bid": "True"), I won.
+        # If I am the highest bidder, register as a winning auction
         if auctions["auction_list"][key]["my_bid"] == "True":
             auctions["winning_auction"][str(key)] = auctions["auction_list"][key]
 
-# -------------------------------
-#   MAIN FUNCTION
-# -------------------------------
+
+# ============= Main Conversion Logic =============
 
 def ledger_to_auction_dict(ledger, token_manager):
+    """
+    Reconstructs the full current application state (auctions, bids, winners) by 
+    replaying the entire blockchain history (Ledger) from Genesis to the latest block.
+    """
     auctions = {
         "last_auction_id": 0,
         "auction_list": {},

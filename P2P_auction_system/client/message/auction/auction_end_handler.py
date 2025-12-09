@@ -12,6 +12,10 @@ from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm, encrypt_wi
 
 
 def handle_auction_end(client_state, obj):
+    """
+    Processes the 'auctionEnd' event. It notifies the user via CLI and, if the local user 
+    is the winner, initiates the cryptographic identity reveal protocol (Proof of Winning).
+    """
     from network.tcp import send_to_peers
     now = int(time.time())
 
@@ -23,6 +27,7 @@ def handle_auction_end(client_state, obj):
         UI.warn(f"AUCTION_END received for unknown auction {auction_target}")
         return
 
+    # UI Notification
     closing_timestamp = info.get("closing_date")
     closing_dt = datetime.fromtimestamp(closing_timestamp)
     
@@ -34,23 +39,24 @@ def handle_auction_end(client_state, obj):
     UI.sys("-----------------------------------")
     print()
 
+    # Check if I am the winner
     if info.get("my_bid") == 'True':
 
         my_winning_token = info.get("last_bid_token_data")
 
         if my_winning_token:
-
             token_id = my_winning_token.get("token_id")
 
             if token_id:
                 UI.step("Processing Winner Status", "STARTED")
                 
+                # 1. Retrieve Unblinding Factor 'r' (Proof of Ownership)
                 r_value = client_state.token_manager.get_blinding_factor_r(token_id)
-
                 if r_value is None:
                     UI.error(f"Critical Error: Token ID {token_id} not found in local wallet.")
                     return
 
+                # 2. Generate and Encrypt Session Key (Deal Key)
                 deal_key = generate_aes_key()
                 add_winning_key(client_state.auctions, auction_target, deal_key)
 
@@ -59,30 +65,33 @@ def handle_auction_end(client_state, obj):
                     "blinding_factor_r": r_value,
                 }
 
+                # Encrypt Proof with Deal Key (Symmetric)
                 private_payload_json = json.dumps(private_payload_obj)
                 private_payload = encrypt_message_symmetric_gcm(private_payload_json, deal_key)
 
+                # Encrypt Deal Key with Auction Public Key (Asymmetric)
                 auction_public_key = info.get("public_key")
                 deal_key_encrypted_bytes = encrypt_with_public_key(deal_key, auction_public_key.encode('utf-8'))
                 deal_key_encrypted_b64 = b64e(deal_key_encrypted_bytes)
 
+                # 3. Prepare New Token for Anonymous Transmission
                 try:
                     token_data = client_state.token_manager.get_token()
                 except Exception as e:
                     UI.error(f"Unable to create Auction Token: {e}")
                     return None
 
+                # 4. Create Encrypted Identity Package (Accountability)
                 identity_pkg = {
                     "real_uid": client_state.uuid,
                     "cert_pem_b64": b64e(client_state.cert_pem) if isinstance(client_state.cert_pem, bytes) else client_state.cert_pem,
                     "token_id_bound": token_data["token_id"],
                     "nonce": secrets.token_hex(16)
                 }
-
                 encrypted_identity_blob = hybrid_encrypt(identity_pkg, client_state.ca_pub_pem)
-
                 timestamp = get_valid_timestamp()
 
+                # 5. Construct & Broadcast Message
                 public_payload_obj = {
                     "type": "winner_token_reveal",
                     "auction_id": auction_target,
@@ -103,7 +112,6 @@ def handle_auction_end(client_state, obj):
             else:
                 UI.error("Token ID not found.")
                 return
-
         else:
             UI.error("Auction ended without a winner token in the data.")
     else:

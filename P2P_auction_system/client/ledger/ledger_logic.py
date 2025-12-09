@@ -2,20 +2,21 @@ import hashlib
 import json
 from datetime import datetime
 
-# -------------------------------------------------------------
-# Utility
-# -------------------------------------------------------------
+
+# ============= Utility Functions =============
 
 def compute_hash(block):
+    """
+    Computes the SHA-256 hash of a block by serializing it to a JSON string.
+    Removes 'block_hash' from the dictionary before hashing to ensure consistency.
+    """
     temp = dict(block)
     temp.pop("block_hash", None)
     block_str = json.dumps(temp, sort_keys=True).encode()
     return hashlib.sha256(block_str).hexdigest()
 
 
-# -------------------------------------------------------------
-# Ledger Core
-# -------------------------------------------------------------
+# ============= Ledger Core =============
 
 class Ledger:
     def __init__(self):
@@ -24,8 +25,11 @@ class Ledger:
         self.max_actions = 1
         self.create_ledger()
 
-    # Send over the network utils -----
+    # Network Serialization Utils
     def to_dict(self):
+        """
+        Serializes the Ledger object into a dictionary for network transmission.
+        """
         return {
             "chain": self.chain,
             "current_actions": self.current_actions,
@@ -34,16 +38,19 @@ class Ledger:
     
     @classmethod
     def from_dict(cls, data):
+        """
+        Reconstructs a Ledger object from a received dictionary.
+        """
         obj = cls()
         obj.chain = data["chain"]
         obj.current_actions = data["current_actions"]
         obj.max_actions = data["max_actions"]
         return obj
 
-    # ---------------------------------------------------------
-
     def create_ledger(self):
-        """Creates a genesis block."""
+        """
+        Initializes the blockchain with a hardcoded Genesis Block.
+        """
         genesis_block = {
             "height": 0,
             "prev_hash": "0",
@@ -56,10 +63,13 @@ class Ledger:
         
         genesis_block["block_hash"] = compute_hash(genesis_block)
         self.chain.append(genesis_block)
-
-    # ---------------------------------------------------------
     
     def add_action(self, action):
+        """
+        Adds a new event) to the block.
+        If the pool size reaches 'max_actions', it automatically triggers block creation.
+        Returns 1 if a block was created, 0 otherwise.
+        """
         self.current_actions.append(action)
         
         if len(self.current_actions) == self.max_actions:
@@ -68,9 +78,11 @@ class Ledger:
         
         return 0
 
-    # ---------------------------------------------------------
     def finish_block(self):
-        """Closes a block, hashes it, and appends it to the chain."""
+        """
+        Finalizes the current block by calculating its hash and linking it to the 
+        previous block in the chain. Clears the pending action pool.
+        """
         if not self.current_actions:
             raise RuntimeError("Cannot finish block: no actions added.")
 
@@ -86,16 +98,17 @@ class Ledger:
 
         new_block["block_hash"] = compute_hash(new_block)
 
-        # Commit
+        # Commit to Chain
         self.chain.append(new_block)
         self.current_actions = []
 
         return new_block
 
-    # ---------------------------------------------------------
     def verify_chain(self):
-        """Verifies the entire chain for hash correctness and continuity."""
-
+        """
+        Iterates through the entire blockchain to validate cryptographic integrity.
+        Checks block continuity (height), hash linkage (prev_hash), and data integrity (hash recalculation).
+        """
         for i in range(1, len(self.chain)):
             block = self.chain[i]
             prev = self.chain[i - 1]
@@ -116,7 +129,10 @@ class Ledger:
         return True, "Chain is valid"
 
     def find_auction_public_key(self, auction_id):
-
+        """
+        Searches the chain for the 'auction' creation event of a specific ID 
+        and returns the public key associated with it (used for reveal encryption).
+        """
         for block in self.chain:
             for action in block.get("events", []):
                 if action.get("type") == "auction":
@@ -126,10 +142,14 @@ class Ledger:
         return None
     
     def find_token_signature(self, token_id):
+        """
+        Scans the chain to find the CA signature associated with a specific token ID.
+        Used for verification during the identity reveal phase.
+        """
         for block in self.chain:
             for action in block.get("events", []):
                 
-                # Support both names: token or token_data
+                # Support both naming conventions depending on message type
                 token_info = action.get("token")
                 
                 if not token_info:
@@ -141,18 +161,23 @@ class Ledger:
         return None
 
 
-    # ---------------------------------------------------------
+    # ============= File I/O =============
+
     def save_to_file(self, path):
-        """Save the current ledger chain to a JSON file."""
+        """
+        Persists the current blockchain state to a JSON file.
+        """
         with open(path, "w") as f:
             json.dump(self.chain, f, indent=2)
 
-    # ---------------------------------------------------------
     def load_from_file(path):
-        """Load the ledger from file or create a new one if invalid."""
+        """
+        Static method to load a Ledger object from a JSON file.
+        Returns a fresh Ledger if the file is empty or corrupted.
+        """
         import os
 
-        # If file exists but is empty → new ledger
+        # If file exists but is empty -> new ledger
         if os.path.getsize(path) == 0:
             return None
 
@@ -161,10 +186,9 @@ class Ledger:
             with open(path, "r") as f:
                 chain = json.load(f)
         except (json.JSONDecodeError, OSError):
-            # If file is corrupted, fallback to a fresh ledger
             return None
 
-        # Create ledger object without running __init__
+        # Create ledger object without running __init__ to avoid overwriting state
         ledger = Ledger.__new__(Ledger)
         ledger.chain = chain
         ledger.current_actions = []
@@ -173,6 +197,10 @@ class Ledger:
         return ledger
     
     def token_used(self, token):
+        """
+        Checks if a specific token ID has already been recorded in the blockchain,
+        effectively preventing Double-Spending.
+        """
         for block in self.chain:
             for action in block.get("events", []):
                 if not action.get("type") == "genesis":
@@ -181,14 +209,12 @@ class Ledger:
         return False
 
 
-
-
-# -------------------------------------------------------------
-# P2P Support (minimal)
-# -------------------------------------------------------------
+# ============= Ledger Helpers =============
 
 def validate_block(block, prev_block):
-    """Validates a single incoming block before adding it from peers."""
+    """
+    Validates a single incoming block structure against the local previous block.
+    """
     if block["height"] != prev_block["height"] + 1:
         return False, "Height mismatch"
 
@@ -205,7 +231,9 @@ def validate_block(block, prev_block):
 
 
 def receive_block(ledger, block):
-    """Append a block from a peer after validating it."""
+    """
+    Attempts to append a received block to the local ledger after validation.
+    """
     prev_block = ledger.chain[-1]
     ok, msg = validate_block(block, prev_block)
 
@@ -217,12 +245,17 @@ def receive_block(ledger, block):
 
 
 def get_latest_block(ledger):
-    """Returns the last block in the chain."""
+    """
+    Returns the tip of the blockchain.
+    """
     return ledger.chain[-1]
 
 
 def compare_chains(local_chain, remote_chain):
-    """Simplest consensus rule: choose longer valid chain."""
+    """
+    Implements the Longest Chain Rule for simple consensus.
+    Returns 'remote' if the incoming chain is longer, otherwise 'local'.
+    """
     if len(remote_chain) > len(local_chain):
         return "remote"
     return "local"

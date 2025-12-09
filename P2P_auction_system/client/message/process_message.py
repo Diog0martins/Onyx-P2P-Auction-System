@@ -10,7 +10,13 @@ from client.message.winner_reveal.final_revelation import prepare_winner_identit
 from client.ledger.ledger_handler import ledger_request_handler, ledger_update_handler
 from design.ui import UI 
 
+
+# ============= Helper Functions  =============
+
 def is_auction_closed(auctions, auction_id):
+    """
+    Checks if the current local time has passed the closing date for a specific auction.
+    """
     now = int(time.time())
     
     auction_data = auctions["auction_list"].get(auction_id)
@@ -25,10 +31,19 @@ def is_auction_closed(auctions, auction_id):
         
     return now >= closing_time
 
+
 def verify_double_spending(token_id, client):
+    """
+    Queries the local blockchain ledger to verify if a token_id has already been spent.
+    """
     return client.ledger.token_used(token_id)
 
+
 def update_personal_auctions(client, msg):
+    """
+    Updates the client's in-memory auction dictionary 
+    based on new incoming auction or bid messages.
+    """
     token_data = msg.get("token_data")
     if msg.get("type") == "auction":
         auction_id = msg.get("id")
@@ -45,7 +60,16 @@ def update_personal_auctions(client, msg):
         update_auction_higher_bid(client.auctions, auction_id, new_bid, "False", token_data)
 
 
+
+#  ============= Core Message Processing  =============
+
+
 def process_message(msg, client_state):
+    """
+    The main logic router. Decodes incoming JSON messages, enforces security checks 
+    (Token Validity, Double Spending, CA Timestamps), and routes the payload to 
+    the specific handler (Auction, Ledger, or Reveal protocols).
+    """
 
     message_types = ["auction",
                      "bid", 
@@ -62,14 +86,12 @@ def process_message(msg, client_state):
         UI.error("Received non-JSON message; ignored")
         return
 
-
     mtype = obj.get("type")
-
     UI.peer(f"Received new {mtype}")
 
     if mtype in message_types:
 
-        # === 1. VERIFICAÇÃO DE TOKENS ===
+        # 1. Security Verification (Tokens & Anti-Double Spending)
         token_data = obj.get("token")
         if not token_data:
             UI.sub_error("Rejected: Missing Token Data")
@@ -86,23 +108,21 @@ def process_message(msg, client_state):
             UI.sub_security(f"Double Spending Attempt Detected (Token {token_id})")
             return
 
-        # === 2. TIMESTAMP VERIFICATION ===
+        # 2. Timestamp Verification (Trust Anchor)
         timestamp_data = obj.get("timestamp")
-
         if not timestamp_data:
             UI.sub_security(f"Rejected {mtype}: Missing Timestamp")
             return
 
-        # Verifie CA Signature
         if not verify_timestamp_signature(client_state.ca_pub_pem, timestamp_data):
             UI.sub_security(f"Invalid CA Signature on Timestamp (Msg ID: {obj.get('id')})")
             return
 
-        # == Auction Logic Messages
+        # 3. Auction & Bid Logic
         if mtype in ("auction", "bid"):
-
             should_process = True
 
+            # Reject bids on closed auctions
             if mtype == "bid":
                 if is_auction_closed(client_state.auctions, obj.get('auction_id')):
                     current_sync_time = int(time.time() + client_state.time_offset)
@@ -113,10 +133,9 @@ def process_message(msg, client_state):
                 if client_state.ledger.add_action(obj) == 1:
                     client_state.ledger.save_to_file(client_state.user_path / "ledger.json")
                 update_personal_auctions(client_state, obj)
-                
                 UI.sub_auction(f"New {mtype} stored in Ledger (ID: {obj.get('id')})")
 
-        # == End of Auction Related Messages
+        # 4. Auction Conclusion & Identity Reveal Logic
         elif mtype == "auctionEnd":
             handle_auction_end(client_state, obj)
             if client_state.ledger.add_action(obj) == 1:
@@ -131,7 +150,7 @@ def process_message(msg, client_state):
         elif mtype == "winner_revelation":
             get_client_identity(client_state, obj)
 
-        # == Ledger Related Messages
+        # 5. Ledger Synchronization Logic
         elif mtype == "ledger_request":
             from network.tcp import send_to_peers
             update_json = ledger_request_handler(obj.get("request_id"), client_state)
@@ -145,9 +164,9 @@ def process_message(msg, client_state):
                 UI.sub_peer("Ledger Synchronized Successfully")
                 ledger_update_handler(client_state, obj)
 
-    # == New key from CA
-    elif mtype == "new_key":
 
+    # 6. Group Key Rotation
+    elif mtype == "new_key":
         keys = obj.get("encrypted_keys")
         new_group_key = find_my_new_key(keys, client_state.private_key)
 

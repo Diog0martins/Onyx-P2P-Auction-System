@@ -10,15 +10,17 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization, hashes
 from client.ca_handler.ca_info import CA_URL
 
-# ----- CA information hard-coded -----
 
+# =============  Registration & Setup ============= 
 
 def connect_and_register_to_ca(client):
     """
-    Connects to the CA, verifies health, and registers the client.
+    Establishes the initial trust with the CA. Performs a health check, submits a 
+    Certificate Signing Request (CSR) for identity verification, and decrypts the 
+    returned secrets (Group Key) using the peer's private key.
     """
     
-    # 1) Health check
+    # 1. Health Check
     try:
         health_resp = requests.get(f"{CA_URL}/health", timeout=3)
         health_resp.raise_for_status()
@@ -30,7 +32,7 @@ def connect_and_register_to_ca(client):
         UI.sub_info("Details", str(e))
         sys.exit(1)
 
-    # 2) Use existing keys -> build X.509 CSR
+    # 2. Build X.509 CSR (Certificate Signing Request)
     try:
         csr_pem = create_x509_csr(
             private_key=client.private_key,
@@ -46,7 +48,7 @@ def connect_and_register_to_ca(client):
         "csr_pem_b64": b64e(csr_pem)
     }
 
-    # 3) Send CSR to CA
+    # 3. Registration Request
     try:
         resp = requests.post(f"{CA_URL}/register", json=payload, timeout=5)
         resp.raise_for_status()
@@ -57,6 +59,7 @@ def connect_and_register_to_ca(client):
 
     data = resp.json()
 
+    # 4. Decrypt Secrets (Group Key)
     try:
         encrypted_blob = b64d(data["encrypted_secrets_b64"])
 
@@ -88,7 +91,14 @@ def connect_and_register_to_ca(client):
         "token_quota": data["token_quota"],
     }
 
+
+# =============  Identity Disclosure ============= 
+
 def request_winner_reveal(client, token_id, encrypted_identity_blob):
+    """
+    Contacts the CA to securely decrypt the 'Encrypted Identity Package' bound to a 
+    specific token. Used for dispute resolution or validating a winner's identity.
+    """
     print(f"[Security] Requesting identity disclosure for the token: {token_id}...")
 
     payload = {
@@ -106,7 +116,7 @@ def request_winner_reveal(client, token_id, encrypted_identity_blob):
         signature_b64 = response_json["signature_b64"]
         signature = base64.b64decode(signature_b64)
 
-        # Verificar assinatura da CA
+        # Verify CA Signature on the Receipt
         data_bytes = json.dumps(
             receipt_data,
             sort_keys=True,
