@@ -14,18 +14,18 @@ def peer_information_share(host, port):
 
     return json.dumps(msg)
 
-def peer_discovery_broadcast(udp_socket: socket.socket, client):
+# def peer_discovery_broadcast(udp_socket: socket.socket, client):
 
-    state = client.peer
+#     state = client.peer
 
-    msg = {
-        "type": "peer_discovery",
-        "peer_prof": "Yes"
-    }
+#     msg = {
+#         "type": "peer_discovery",
+#         "peer_prof": "Yes"
+#     }
 
-    json_msg = json.dumps(msg)
+#     json_msg = json.dumps(msg)
 
-    broadcast_message(udp_socket, state, json_msg)
+#     broadcast_message(udp_socket, state, json_msg)
 
 # ======== ======== ========
 
@@ -34,20 +34,20 @@ def peer_discovery_broadcast(udp_socket: socket.socket, client):
 
 # ======== UDP Utilities ========
 
-def broadcast_message(s: socket.socket, state: PeerState, message: str):
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+# def broadcast_message(s: socket.socket, state: PeerState, message: str):
+#     s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-    if TEST == 1:
-        # Local test mode: simulate broadcast by looping through known ports
-        for test_port in range(5000, 5010):
-            s.sendto(message.encode(), ("127.0.0.1", test_port))
-            print(f"    [LOCAL BROADCAST] Sent to 127.0.0.1:{test_port}")
-    else:
-        # Real LAN broadcast
-        s.sendto(message.encode(), ("255.255.255.255", state.udp_port))
-        print(f"[LAN BROADCAST] Sent to 255.255.255.255:{state.udp_port}")
+#     if TEST == 1:
+#         # Local test mode: simulate broadcast by looping through known ports
+#         for test_port in range(5000, 5010):
+#             s.sendto(message.encode(), ("127.0.0.1", test_port))
+#             print(f"    [LOCAL BROADCAST] Sent to 127.0.0.1:{test_port}")
+#     else:
+#         # Real LAN broadcast
+#         s.sendto(message.encode(), ("255.255.255.255", state.udp_port))
+#         print(f"[LAN BROADCAST] Sent to 255.255.255.255:{state.udp_port}")
 
-    print("Finished broadcast!\n")
+#     print("Finished broadcast!\n")
 
 
 def listen_for_messages(s: socket.socket, client):
@@ -98,24 +98,24 @@ def listen_for_messages(s: socket.socket, client):
 
 # ======== UDP Handler ========
 
-def peer_udp_handling(client):
+# def peer_udp_handling(client):
 
-    state = client.peer
+#     state = client.peer
 
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    udp_socket.bind((state.host, state.udp_port))
+#     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#     udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+#     udp_socket.bind((state.host, state.udp_port))
 
-    # Start UDP listener thread
-    threading.Thread(
-        target=listen_for_messages,
-        args=(udp_socket, client, ),
-        daemon=True
-    ).start()
+#     # Start UDP listener thread
+#     threading.Thread(
+#         target=listen_for_messages,
+#         args=(udp_socket, client, ),
+#         daemon=True
+#     ).start()
 
-    print("\nWill Broadcast!")
-    peer_discovery_broadcast(udp_socket, client)
+#     print("\nWill Broadcast!")
+#     peer_discovery_broadcast(udp_socket, client)
 
-    return udp_socket
+#     return udp_socket
 
 # ======== ======== ========

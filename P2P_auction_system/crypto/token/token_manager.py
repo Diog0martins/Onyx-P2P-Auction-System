@@ -8,9 +8,7 @@ from typing import Dict, Tuple, Optional
 from cryptography.hazmat.primitives import hashes
 from crypto.token.crypto_token import BlindRSACore
 from client.ca_handler.ca_message import get_valid_timestamp
-
-
-CA_URL = "http://127.0.0.1:8443"
+from client.ca_handler.ca_info import CA_URL
 
 
 def verify_peer_blinding_data(ca_pub_pem: bytes, peer_uid: str, peer_token_id: str, peer_r: int, peer_signature_b64: str) -> bool:
