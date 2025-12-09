@@ -1,4 +1,3 @@
-
 from ca.ca_service import run_ca
 
 def main():

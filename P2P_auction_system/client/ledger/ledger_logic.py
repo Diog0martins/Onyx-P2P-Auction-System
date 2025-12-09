@@ -151,7 +151,6 @@ class Ledger:
     def load_from_file(path):
         """Load the ledger from file or create a new one if invalid."""
         import os
-        import json
 
         # If file exists but is empty → new ledger
         if os.path.getsize(path) == 0:

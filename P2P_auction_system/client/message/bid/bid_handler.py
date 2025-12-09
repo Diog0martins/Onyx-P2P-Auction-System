@@ -1,4 +1,3 @@
-import time
 import secrets
 import json, random
 from design.ui import UI

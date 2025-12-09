@@ -1,19 +1,15 @@
 import socket
-import threading
 import sys
-import json
-import time
+import threading
 from pathlib import Path
-from local_test import TEST
 
-from design.ui import UI
-from network.ip import get_ip
-from config.config import parse_config
-from client.client_state import Client
 from client.ca_handler.ca_connection import connect_and_register_to_ca
 from client.ca_handler.ca_message import leave_network
+from client.client_state import Client
+from config.config import parse_config
 from crypto.keys.keys_handler import prepare_key_pair_generation
-from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
+from local_test import TEST
+from network.ip import get_ip
 
 RELAY_CONNECTIONS = {} 
 RELAY_LOCK = threading.Lock()

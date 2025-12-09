@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 
 # Enter /register
 class RegisterReq(BaseModel):

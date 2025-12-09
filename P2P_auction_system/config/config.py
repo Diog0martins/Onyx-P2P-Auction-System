@@ -1,5 +1,6 @@
 import json, os
 from pathlib import Path
+
 CONFIG_DIR = Path.cwd() / "config"
 
 def make_json_path(path):
