@@ -18,6 +18,11 @@
 
 ## 🛠️ Installation
 
+### Prerequisites
+* **Python 3.12+**: This system relies on features introduced in Python 3.12. Please ensure you have this version or newer installed.
+
+### Steps
+
 1.  **Clone the repository:**
 
     ```bash
