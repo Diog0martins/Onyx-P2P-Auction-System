@@ -47,6 +47,7 @@ coverage.xml
 .DS_Store
 Thumbs.db
 repomix-output.xml
+ca_security.log
 
 # ==========================
 #   PROJECT SPECIFIC RULES
