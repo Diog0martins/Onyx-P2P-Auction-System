@@ -1,5 +1,7 @@
 import uuid
 import json
+import time
+import logging
 from fastapi import FastAPI, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone, timedelta
@@ -13,7 +15,7 @@ from ca.ca_db import get_db, store_user, user_exists, insert_token, increment_to
 from ca.ca_api.Register import RegisterReq, RegisterResp
 from ca.ca_api.Tokens import TokensReq, TokensResp
 from ca.ca_api.BlindTokens import BlindSignReq
-
+from client.ca_handler.ca_info import CA_URL
 from crypto.certificates.certificates import make_x509_certificate, verify_csr
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm, encrypt_with_public_key
 from crypto.crypt_decrypt.hybrid import hybrid_decrypt
@@ -23,6 +25,25 @@ from crypto.encoding.b64 import b64e, b64d
 app = FastAPI(title="Auction CA", version="1.0.0")
 
 app.state.PEER_SESSIONS = {}
+
+logging.basicConfig(
+    filename='ca_security.log',
+    level=logging.INFO,
+    format='%(message)s'
+)
+
+def log_security_event(event_type, request, status, latency=0, extra_info=None):
+    """Creates a structured log in JSON format for monitoring."""
+
+    log_entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event_type": event_type,
+        "source_ip": request.client.host,
+        "status": status,
+        "latency_ms": round(latency * 1000, 2),
+        "extra_info": extra_info or {}
+    }
+    logging.info(json.dumps(log_entry))
 
 @app.get("/health")
 def health():
@@ -144,30 +165,39 @@ def blind_sign(req: BlindSignReq, request: Request):
         This allows the user to later unblind the signature and use it as a valid, anonymous token.
     """
 
-    # 1. Verify that the UID exists
-    conn = get_db(request.app.state.DB_PATH)
-    if not user_exists(conn, req.uid):
+    start_time = time.time()
+    try:
+
+        # 1. Verify that the UID exists
+        conn = get_db(request.app.state.DB_PATH)
+        if not user_exists(conn, req.uid):
+            conn.close()
+            raise HTTPException(status_code=404, detail="Unknown uid")
         conn.close()
-        raise HTTPException(status_code=404, detail="Unknown uid")
-    conn.close()
 
-    # 2. Obtain the CA private key
-    ca_sk = request.app.state.CA_SK
+        # 2. Obtain the CA private key
+        ca_sk = request.app.state.CA_SK
 
-    # 3. Decoding the blinded token
-    blinded_int = int.from_bytes(b64d(req.blinded_token_b64), "big")
+        # 3. Decoding the blinded token
+        blinded_int = int.from_bytes(b64d(req.blinded_token_b64), "big")
 
-    # 4. RSA blind signing: signature = blinded^d mod n
-    numbers = ca_sk.private_numbers()
-    d = numbers.d
-    n = numbers.public_numbers.n
+        # 4. RSA blind signing: signature = blinded^d mod n
+        numbers = ca_sk.private_numbers()
+        d = numbers.d
+        n = numbers.public_numbers.n
 
-    signature_int = pow(blinded_int, d, n)
+        signature_int = pow(blinded_int, d, n)
 
-    # 5. Convert to bytes for sending
-    sig_bytes = signature_int.to_bytes((n.bit_length() + 7) // 8, "big")
+        # 5. Convert to bytes for sending
+        sig_bytes = signature_int.to_bytes((n.bit_length() + 7) // 8, "big")
 
-    return {"blind_signature_b64": b64e(sig_bytes)}
+        latency = time.time() - start_time
+        log_security_event("blind_sign_request", request, "success", latency, {"uid": req.uid})
+        return {"blind_signature_b64": b64e(sig_bytes)}
+    except Exception as e:
+        latency = time.time() - start_time
+        log_security_event("blind_sign_request", request, "fail", latency, {"error": str(e)})
+        raise e
 
 
 @app.get("/timestamp")
@@ -178,7 +208,9 @@ def timestamp(request: Request, delta: Optional[int] = None):
         Supports an optional 'delta' to generate future timestamps.
     """
 
-    # 1. Calcular o tempo
+    start_time = time.time()
+
+    # 1. Get the time
     now = datetime.now(timezone.utc)
 
     if delta is not None:
@@ -186,7 +218,7 @@ def timestamp(request: Request, delta: Optional[int] = None):
     else:
         target_time = now
 
-    # 2. Formatar para ISO String
+    # 2. Format to ISO string
     ts = target_time.replace(microsecond=0).isoformat()
     ts_bytes = ts.encode('utf-8')
 
@@ -203,11 +235,11 @@ def timestamp(request: Request, delta: Optional[int] = None):
         hashes.SHA256()
     )
 
+    latency = time.time() - start_time
+    log_security_event("timestamp_request", request, "success", latency)
+
     # 5. Return timestamp and signature
-    return {
-        "timestamp": ts,
-        "signature": b64e(signature)
-    }
+    return { "timestamp": ts, "signature": b64e(signature) }
 
 @app.post("/leave")
 def leave_network(req: dict, request: Request):
@@ -281,36 +313,46 @@ def reveal_identity(req: RevealReq, request: Request):
         Returns a signed receipt of the revelation.
     """
 
+    start_time = time.time()
     ca_sk = request.app.state.CA_SK
 
-    identity_pkg = hybrid_decrypt(req.encrypted_identity, ca_sk)
+    try:
+        identity_pkg = hybrid_decrypt(req.encrypted_identity, ca_sk)
 
-    if not identity_pkg:
-        raise HTTPException(status_code=400, detail="Decryption failed")
+        if not identity_pkg:
+            latency = time.time() - start_time
+            log_security_event("reveal_identity_attempt", request, "fail", latency,
+                               {"reason": "decryption_failed", "uid": req.requester_uid})
+            raise HTTPException(status_code=400, detail="Decryption failed")
 
-    if identity_pkg.get("token_id_bound") != req.token_id_disputed:
-        raise HTTPException(status_code=400, detail="Token mismatch! Fraud detected.")
+        if identity_pkg.get("token_id_bound") != req.token_id_disputed:
+            latency = time.time() - start_time
+            log_security_event("reveal_identity_attempt", request, "fail", latency,
+                               {"reason": "token_mismatch", "uid": req.requester_uid})
+            raise HTTPException(status_code=400, detail="Token mismatch! Fraud detected.")
 
-    receipt_data = {
-        "status": "REVEALED",
-        "token_id": req.token_id_disputed,
-        "real_uid": identity_pkg["real_uid"],
-        "certificate_pem": identity_pkg["cert_pem_b64"],
-        "timestamp": now_iso()
-    }
+        receipt_data = {
+            "status": "REVEALED",
+            "token_id": req.token_id_disputed,
+            "real_uid": identity_pkg["real_uid"],
+            "certificate_pem": identity_pkg["cert_pem_b64"],
+            "timestamp": now_iso()
+        }
 
-    data_bytes = json.dumps(receipt_data, sort_keys=True, separators=(',', ':')).encode('utf-8')
+        data_bytes = json.dumps(receipt_data, sort_keys=True, separators=(',', ':')).encode('utf-8')
 
-    signature = ca_sk.sign(
-        data_bytes,
-        padding.PSS(
-            mgf=padding.MGF1(hashes.SHA256()),
-            salt_length=padding.PSS.MAX_LENGTH
-        ),
-        hashes.SHA256()
-    )
-
-    return {
-        "receipt_data": receipt_data,
-        "signature_b64": b64e(signature)
-    }
+        signature = ca_sk.sign(
+            data_bytes,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        latency = time.time() - start_time
+        log_security_event("reveal_identity_attempt", request, "success", latency, {"token_id": req.token_id_disputed})
+        return { "receipt_data": receipt_data, "signature_b64": b64e(signature) }
+    except Exception as e:
+        if not isinstance(e, HTTPException):
+            log_security_event("reveal_identity_attempt", request, "fail", time.time() - start_time, {"error": str(e)})
+        raise e
