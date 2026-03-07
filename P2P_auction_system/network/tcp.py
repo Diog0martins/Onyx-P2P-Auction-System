@@ -2,6 +2,7 @@ import threading, socket
 from design.ui import UI
 from network.peer_state import PeerState
 from client.message.process_message import process_message
+from security_monitor import log_security_event, record_latency
 from crypto.crypt_decrypt.decrypt import decrypt_message_symmetric_gcm
 
 
@@ -69,7 +70,14 @@ def handle_connection(conn, addr, client_state):
 
                 try:
                     try:
-                        msg = decrypt_message_symmetric_gcm(c_msg, client_state.group_key)
+                        
+                        try:
+                            msg = decrypt_message_symmetric_gcm(c_msg, client_state.group_key)
+                        except Exception as e:
+                            log_security_event("decryption_error", "failure", "AES-GCM decryption failed")
+                            record_latency(start_time)
+                            return
+                        
                         process_message(msg, client_state)
                     except Exception:
                         process_message(c_msg, client_state)

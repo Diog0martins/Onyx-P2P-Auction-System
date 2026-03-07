@@ -2,6 +2,7 @@ import json
 import time
 from datetime import datetime
 from crypto.keys.group_keys import find_my_new_key
+from security_monitor import log_security_event, record_latency
 from client.ca_handler.ca_message import verify_timestamp_signature
 from crypto.crypt_decrypt.crypt import encrypt_message_symmetric_gcm
 from client.message.auction.auction_end_handler import handle_auction_end
@@ -10,7 +11,7 @@ from client.message.auction.auction_handler import update_auction_higher_bid, ad
 from client.message.winner_reveal.final_revelation import prepare_winner_identity, get_client_identity
 from client.ledger.ledger_handler import ledger_request_handler, ledger_update_handler
 from design.ui import UI 
-
+        
 
 # ============= Helper Functions  =============
 
@@ -96,7 +97,8 @@ def process_message(msg, client_state):
     """
 
     #print(client_state.auctions)
-
+    start_time = time.time()
+    
     message_types = ["auction",
                      "bid", 
                      "ledger_request",
@@ -108,6 +110,7 @@ def process_message(msg, client_state):
 
     try:
         obj = json.loads(msg)
+        print(obj)
     except:
         UI.error("Received non-JSON message; ignored")
         return
@@ -132,16 +135,28 @@ def process_message(msg, client_state):
 
         if verify_double_spending(token_id, client_state):
             UI.sub_security(f"Double Spending Attempt Detected (Token {token_id})")
+            log_security_event(
+                event_type="token_reuse_detected", 
+                status="failure", 
+                reason="Race condition or replay attack detected",
+                auction_id=obj.get("id"),
+                token_id=token_id
+            )
             return
 
         # 2. Timestamp Verification (Trust Anchor)
         timestamp_data = obj.get("timestamp")
         if not timestamp_data:
             UI.sub_security(f"Rejected {mtype}: Missing Timestamp")
+            log_security_event("timestamp_invalid", "failure", "CA timestamp expired or forged", auction_id=obj.get("id"))
+            record_latency(start_time)
             return
 
         if not verify_timestamp_signature(client_state.ca_pub_pem, timestamp_data):
             UI.sub_security(f"Invalid CA Signature on Timestamp (Msg ID: {obj.get('id')})")
+            
+            log_security_event("invalid_signature", "failure", "RSA signature mismatch", auction_id=obj.get("id"))
+            record_latency(start_time)
             return
 
         # 3. Auction & Bid Logic
@@ -202,3 +217,5 @@ def process_message(msg, client_state):
 
     else:
         UI.sub_error(f"Unknown message type received: {mtype}")
+
+    record_latency(start_time)

@@ -1,4 +1,5 @@
 import json, random
+from security_monitor import log_security_event
 from client.ledger.ledger_logic import Ledger, compare_chains
 from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
 from client.ca_handler.ca_message import get_valid_timestamp
@@ -74,6 +75,11 @@ def ledger_update_handler(client, ledger_update_message):
     # Consensus: Longest Chain Rule
     if compare_chains(client.ledger.chain, ledger.chain) == "remote":
         if ledger.verify_chain():
+            log_security_event(
+                event_type="chain_updated", 
+                status="success", 
+                reason=f"Ledger synced. New height: {len(ledger.chain)}"
+            )
             client.ledger = ledger
             
             # Persist new state
@@ -83,7 +89,13 @@ def ledger_update_handler(client, ledger_update_message):
             # Re-interpret the blockchain to update run-time dictionary state
             translated_ledger = ledger_to_auction_dict(client.ledger, client.token_manager)
             client.auctions = translated_ledger
-
+        else:
+            log_security_event(
+                event_type="ledger_divergence", 
+                status="failure", 
+                reason="Incoming ledger update contains hash mismatches or invalid state"
+            )
+            return False
 
 # ============= Initialization =============
 

@@ -5,12 +5,12 @@ from network.ip import get_ip
 from network.peer import run_peer
 from config.config import parse_config
 from client.client_state import Client
+from security_monitor import log_security_event
 from crypto.token.token_manager import TokenManager
 from client.ledger.ledger_handler import init_cli_ledger
 from crypto.keys.keys_handler import prepare_key_pair_generation
 from client.ca_handler.ca_connection import connect_and_register_to_ca
 from client.ledger.translation.ledger_to_dict import ledger_to_auction_dict
-
 
 def check_user_path(user_path):
     """
@@ -68,23 +68,38 @@ def start_client(args):
         UI.error(f"CA Connection failed: {e}")
         sys.exit(1)
 
-    # Initialize Token Manager for Blind Signatures
-    config_name = args[1] if len(args) == 2 else "config_lan"
-    client.token_manager = TokenManager(
-        config_name=config_name,
-        ca_pub_pem=client.ca_pub_pem,
-        uid=info["uid"]
-    )
+    try:
+        # Initialize Token Manager for Blind Signatures
+        config_name = args[1] if len(args) == 2 else "config_lan"
+        client.token_manager = TokenManager(
+            config_name=config_name,
+            ca_pub_pem=client.ca_pub_pem,
+            uid=info["uid"]
+        )
 
-    # Load and Synchronize Local Ledger (Blockchain)
-    init_cli_ledger(client, user_path)
-    
-    if not len(client.ledger.chain) == 1:
-        client.auctions = ledger_to_auction_dict(client.ledger, client.token_manager)
+        # Load and Synchronize Local Ledger (Blockchain)
+        init_cli_ledger(client, user_path)
+        
+        if not len(client.ledger.chain) == 1:
+            client.auctions = ledger_to_auction_dict(client.ledger, client.token_manager)
+
+        log_security_event(
+            event_type="wallet_loaded", 
+            status="success", 
+            reason="Node initialized successfully"
+        )
+    except Exception as e:
+        log_security_event(
+            event_type="wallet_loaded", 
+            status="failure", 
+            reason=f"Failed to load keys: {str(e)}"
+        )
+
 
     UI.step("Client structures", "SYNCED")
     UI.sub_step("Ledger", "Loaded")
     UI.sub_step("Token Manager", "Loaded")
+
 
     # Start P2P Network Listener
     run_peer(host, port, client)
