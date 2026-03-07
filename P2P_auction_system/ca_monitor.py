@@ -5,10 +5,10 @@ from datetime import datetime
 
 # Thresholds for triggering security alerts
 MAX_RPM = 60  # Alert if requests per minute exceed 60
-MAX_LATENCY_MS = 200  # Alert if RSA processing latency exceeds 200ms
+MAX_LATENCY_MS = 1.2  # Alert if RSA processing latency exceeds 200ms
 LOG_FILE = 'ca_security.log'
 
-# ANSI Color codes for terminal output
+# ANSI color codes for terminal output
 CLR_RESET = "\033[0m"
 CLR_RED = "\033[91m"
 CLR_GREEN = "\033[92m"
@@ -16,18 +16,21 @@ CLR_YELLOW = "\033[93m"
 CLR_BLUE = "\033[94m"
 CLR_BOLD = "\033[1m"
 
+
 def run_dashboard():
     """
-    Main loop that monitors the CA security log in real-time.
+    Main loop that monitors the CA security log in real time.
     It parses JSON entries and evaluates system health against predefined thresholds.
     """
     print(f"{CLR_BOLD}{CLR_BLUE}[SYSTEM] CA Security Monitor Started{CLR_RESET}")
     print(f"{CLR_BLUE}[INFO] Monitoring file: {LOG_FILE}{CLR_RESET}")
     print(f"{CLR_BLUE}[INFO] Thresholds: RPM > {MAX_RPM} | Latency > {MAX_LATENCY_MS}ms{CLR_RESET}\n")
 
-    # Check if the log file exists before starting
+    # Create the log file if it does not exist
     if not os.path.exists(LOG_FILE):
-        print(f"{CLR_YELLOW}[WARN] Log file not found. Waiting for CA to generate logs...{CLR_RESET}")
+        with open(LOG_FILE, 'w') as f:
+            pass
+        print(f"{CLR_YELLOW}[WARN] Log file not found. An empty log file was created: {LOG_FILE}{CLR_RESET}")
 
     try:
         # Open the log file in read mode
@@ -61,7 +64,7 @@ def run_dashboard():
                         is_alert = True
                         log_color = CLR_RED
 
-                    # Alert if latency is too high (potential Resource Exhaustion / DoS CPU)
+                    # Alert if latency is too high (potential resource exhaustion / CPU DoS)
                     if latency > MAX_LATENCY_MS:
                         is_alert = True
                         log_color = CLR_YELLOW
@@ -74,7 +77,8 @@ def run_dashboard():
                     # Standard log display
                     ts_display = datetime.now().strftime('%H:%M:%S')
                     print(
-                        f"{log_color}[LOG] {ts_display} | {event:<25} | Latency: {latency:>7}ms | Status: {status}{CLR_RESET}")
+                        f"{log_color}[LOG] {ts_display} | {event:<25} | Latency: {latency:>7}ms | Status: {status}{CLR_RESET}"
+                    )
 
                 except json.JSONDecodeError:
                     # Skip lines that are not valid JSON

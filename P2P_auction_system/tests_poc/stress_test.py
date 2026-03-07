@@ -3,7 +3,7 @@ import threading
 import time
 from client.ca_handler.ca_info import CA_URL
 
-THREADS = 50
+THREADS = 30
 TARGET_ENDPOINT = f"{CA_URL}/blind_sign"
 
 def attack_worker():
