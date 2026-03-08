@@ -110,7 +110,7 @@ def process_message(msg, client_state):
 
     try:
         obj = json.loads(msg)
-        print(obj)
+        #print(obj)
     except:
         UI.error("Received non-JSON message; ignored")
         return
